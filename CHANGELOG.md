@@ -8,6 +8,7 @@ Erste für eine öffentliche Git-Veröffentlichung vorbereitete Version.
 
 ### Enthalten
 
+- aussagekräftige GitHub-Screenshots mit ausschließlich frei erfundenen Testdaten
 - öffentliche Rückmeldung per Code oder Direktlink
 - normale und flexible Schichten mit Kapazitätsprüfung
 - Adminverwaltung für Rückmeldungen, Schichten, Codes und Änderungswünsche

@@ -4,6 +4,26 @@ Eine schlanke, selbst gehostete Web-Anwendung zur Organisation von Helferinnen u
 
 Helfer benötigen kein Benutzerkonto und keine App. Ein persönlicher vierstelliger Code oder Direktlink genügt. Die Anwendung benötigt weder Framework noch Composer oder Node.js: PHP 8.x und SQLite reichen aus.
 
+## Einblicke
+
+Alle abgebildeten Namen, E-Mail-Adressen, Codes und Veranstaltungsangaben sind frei erfundene Testdaten.
+
+### Öffentliche Startseite
+
+![Öffentliche Startseite der Helferliste mit Feuerwehr-Motiv](docs/screenshots/01-startseite.png)
+
+### Rückmeldung und Schichtauswahl
+
+![Ausgefüllte Rückmeldung von Lena Beispiel mit ausgewählten Schichten](docs/screenshots/02-schichtauswahl.png)
+
+### Adminübersicht
+
+![Adminbereich mit Testpersonen, Schichtbelegung und Änderungswunsch](docs/screenshots/03-admin-uebersicht.png)
+
+### Einstellungen und Bildverwaltung
+
+![Einstellungen mit Drag-and-drop-Upload sowie Feuerwehr-, THW- und Notarztmotiv](docs/screenshots/04-einstellungen-bildgalerie.png)
+
 ## Funktionen
 
 ### Öffentliche Helferseite
