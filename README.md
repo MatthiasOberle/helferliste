@@ -1,0 +1,144 @@
+# Helferliste
+
+Eine schlanke, selbst gehostete Web-Anwendung zur Organisation von Helferinnen und Helfern bei Veranstaltungen. Sie eignet sich für Vereine, Feuerwehren, Hilfsorganisationen, Ortsverbände und andere Gruppen.
+
+Helfer benötigen kein Benutzerkonto und keine App. Ein persönlicher vierstelliger Code oder Direktlink genügt. Die Anwendung benötigt weder Framework noch Composer oder Node.js: PHP 8.x und SQLite reichen aus.
+
+## Funktionen
+
+### Öffentliche Helferseite
+
+- Zugang per persönlichem Code oder Direktlink
+- Zu- oder Absage mit Name
+- Auswahl normaler Schichten und flexibler Springer-Schichten
+- automatische Anzeige freier und belegter Plätze
+- Schutz vor Überbuchung voller Schichten
+- freiwilliges Hinweisfeld für Wünsche und Rückfragen
+- einmalige verbindliche Rückmeldung pro Code
+- nachträgliche Änderungswünsche ohne unbemerkte Datenänderung
+- anonyme Belegungsübersicht nach eigener Rückmeldung
+- mobiloptimierte Bedienung
+
+### Administration
+
+- Übersicht über Zusagen, Absagen und offene Rückmeldungen
+- Rückmeldungen bearbeiten und löschen
+- Änderungswünsche bearbeiten, ablehnen und dokumentieren
+- normale und flexible Schichten mit Kapazität und Reihenfolge verwalten
+- Zugangscodes einzeln oder aus E-Mail-Listen erzeugen
+- persönliche Einladungslinks kopieren
+- ungenutzte Codes bereinigen
+- Veranstaltungsdaten kontrolliert zurücksetzen
+- Admin-Passwort in der Oberfläche ändern
+- umschaltbare Mobil- und Desktopansicht
+
+### Anpassung ohne Programmierkenntnisse
+
+Unter `System → Einstellungen` lassen sich unter anderem anpassen:
+
+- Name der Anwendung, Organisation und Veranstaltung
+- öffentliche Basis-URL
+- sämtliche wichtigen Überschriften, Erklärungen, Beschriftungen und Schaltflächen
+- Haupt-, Hintergrund-, Karten-, Text- und Auslastungsfarben
+- Schriftart
+- Impressum und Datenschutzkontakt
+- Kopfbild aus der mitgelieferten Galerie
+- eigenes Kopfbild per Dateiauswahl oder Drag-and-drop
+
+Mitgeliefert werden neutrale Motive für Feuerwehr, THW und Notarzt. Eigene PNG-, JPG-, WebP- und GIF-Dateien bis 8 MB werden geprüft und sicher umbenannt.
+
+### Export und Statistik
+
+- kompletter TSV-Export für Excel
+- gesonderter Export ausgefüllter Hinweise und Wünsche
+- Änderungswunsch-Verlauf im Gesamtexport
+- Rückmeldequote sowie Zu- und Absagen
+- Auslastung der Schichten
+- zusammengefasste Geräteklassen: Desktop, Mobilgerät, Tablet oder unbekannt
+- keine E-Mail-Öffnungsanalyse und keine Speicherung vollständiger User-Agents bei neuen Installationen
+
+## Voraussetzungen
+
+- PHP 8.0 oder neuer
+- PHP-Erweiterungen `pdo_sqlite` und `fileinfo`
+- SQLite 3
+- Webserver mit PHP-Unterstützung, empfohlen: Nginx oder Apache; IIS ist ebenfalls möglich
+- Schreibrechte des Webservers für `data/` und `www/assets/uploads/`
+- HTTPS für einen öffentlichen Einsatz
+
+## Installation
+
+Die vollständigen Anleitungen für Ubuntu/Debian, manuelle Linux-Installationen, Windows/IIS und XAMPP stehen in [INSTALL.md](INSTALL.md).
+
+Kurzfassung für einen frischen Ubuntu-/Debian-Server:
+
+```bash
+sudo bash Install/install_helferliste.sh
+```
+
+Anschließend `https://DEINE-DOMAIN/admin.php` öffnen und sofort das Standardpasswort ändern.
+
+## Ersteinrichtung
+
+Die Git-Version enthält bewusst keine persönlichen Daten. Nach der Installation müssen folgende Angaben ergänzt werden:
+
+1. Admin-Passwort ändern.
+2. Organisation, Veranstaltung und öffentliche URL eintragen.
+3. Impressum und Datenschutzkontakt vervollständigen.
+4. Kopfbild, Farben und Seitentexte prüfen.
+5. Beispielschichten ersetzen.
+6. Zugangscodes für echte Helfer erzeugen.
+
+Eine genaue Checkliste steht in [CONFIGURATION.md](CONFIGURATION.md). Solange rechtliche Kontaktdaten fehlen, zeigen Impressum und Datenschutzerklärung einen sichtbaren Einrichtungs-Hinweis statt leerer Felder.
+
+## Daten und Backups
+
+Alle veränderlichen Daten liegen in:
+
+- `data/helferliste.sqlite` – Rückmeldungen, Codes, Schichten und Einstellungen
+- `www/assets/uploads/` – eigene Kopfbilder
+
+Beide Orte gehören nicht in Git und werden durch `.gitignore` ausgeschlossen. Für ein vollständiges Backup müssen beide gesichert werden. Der Linux-Installer erhält vorhandene Bild-Uploads bei einer Aktualisierung.
+
+## Projektstruktur
+
+```text
+.
+├── README.md
+├── INSTALL.md
+├── CONFIGURATION.md
+├── SECURITY.md
+├── CONTRIBUTING.md
+├── CHANGELOG.md
+├── LICENSE
+├── Install/
+│   ├── database_schema.sql
+│   ├── install_helferliste.sh
+│   └── install_helferliste_windows.bat
+└── www/
+    ├── index.php
+    ├── admin.php
+    ├── settings.php
+    ├── weitere PHP-Dateien
+    └── assets/
+        ├── hlf20.png
+        ├── hero-thw.png
+        ├── hero-notarzt.png
+        └── uploads/
+```
+
+Auf einem empfohlenen Linux-Server wird `www/` nach `/var/www/helferliste/public/` kopiert. Die Datenbank liegt getrennt im nicht öffentlichen Ordner `/var/www/helferliste/data/`.
+
+## Sicherheit und Datenschutz
+
+Die Anwendung verarbeitet personenbezogene Daten. Der jeweilige Betreiber ist für Rechtsgrundlage, Datenschutzhinweise, Aufbewahrungsdauer, Serverbetrieb und Zugriffsschutz verantwortlich. Die enthaltenen Rechtstexte sind technische Vorlagen und keine Rechtsberatung.
+
+Sicherheitshinweise und die vertrauliche Meldung von Schwachstellen beschreibt [SECURITY.md](SECURITY.md).
+
+## Mitwirken
+
+Fehlerberichte und Verbesserungen sind willkommen. Hinweise für Beiträge stehen in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Lizenz
+
+Dieses Projekt steht unter der [MIT-Lizenz](LICENSE).

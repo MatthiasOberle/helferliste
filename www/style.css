@@ -1,0 +1,133 @@
+/* Grundlayout für ältere oder ausgelagerte Seiten der Helferliste. */
+/* Einheitliches Box-Modell verhindert Überraschungen bei Breiten und Abständen. */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #f2f4f7;
+    color: #1f2937;
+}
+
+/* Standard-Container für schmale, gut lesbare Seiten. */
+.container {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+.card {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+h1 {
+    margin: 0;
+    font-size: 32px;
+}
+
+h2 {
+    margin-top: 24px;
+    font-size: 20px;
+}
+
+.subtitle {
+    margin-top: 6px;
+    margin-bottom: 24px;
+    color: #6b7280;
+}
+
+label {
+    display: block;
+    font-weight: 600;
+    margin-top: 18px;
+    margin-bottom: 8px;
+}
+
+input[type="text"],
+textarea {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    font-size: 16px;
+}
+
+textarea {
+    resize: vertical;
+}
+
+/* Auswahlboxen für Status und Schichten. */
+.choice-box {
+    display: grid;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.choice-box label,
+.shift {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 14px;
+    background: #f9fafb;
+    cursor: pointer;
+}
+
+.shift.disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.small {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+button {
+    width: 100%;
+    margin-top: 24px;
+    padding: 16px;
+    border: 0;
+    border-radius: 14px;
+    background: #b91c1c;
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #991b1b;
+}
+
+/* Einheitliche Hinweise für erfolgreiche Aktionen. */
+.success {
+    padding: 14px;
+    border-radius: 12px;
+    background: #dcfce7;
+    color: #166534;
+    font-weight: 600;
+    margin-bottom: 18px;
+}
+
+/* Einheitliche Hinweise für Fehler. */
+.error {
+    padding: 14px;
+    border-radius: 12px;
+    background: #fee2e2;
+    color: #991b1b;
+    font-weight: 600;
+    margin-bottom: 18px;
+}
+
+.hidden {
+    display: none;
+}

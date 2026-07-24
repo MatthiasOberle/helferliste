@@ -1,0 +1,36 @@
+name: Qualitätsprüfung
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: PHP ${{ matrix.php }}
+    strategy:
+      matrix:
+        php: ["8.0", "8.3"]
+
+    steps:
+      - name: Repository laden
+        uses: actions/checkout@v4
+
+      - name: PHP einrichten
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo_sqlite, fileinfo
+          coverage: none
+
+      - name: PHP-Syntax prüfen
+        run: find www -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Linux-Installer prüfen
+        run: bash -n Install/install_helferliste.sh
+
+      - name: Datenbankschema prüfen
+        run: sqlite3 /tmp/helferliste-test.sqlite < Install/database_schema.sql

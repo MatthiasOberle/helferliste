@@ -1,0 +1,34 @@
+# Sicherheit
+
+## Unterstützte Versionen
+
+Sicherheitskorrekturen werden für den jeweils aktuellen Stand des Hauptzweigs und die neueste veröffentlichte Version vorgesehen. Ältere Installationen sollten vor einer Meldung zunächst mit der aktuellen Version verglichen werden.
+
+## Schwachstellen melden
+
+Bitte Sicherheitslücken nicht als öffentliches GitHub-Issue veröffentlichen. Nutze nach Veröffentlichung des Repositories möglichst GitHubs Funktion **Private vulnerability reporting** unter `Security → Advisories → Report a vulnerability`.
+
+Eine Meldung sollte enthalten:
+
+- betroffene Version
+- nachvollziehbare Schritte
+- mögliche Auswirkungen
+- gegebenenfalls einen minimalen Nachweis
+- bekannte Gegenmaßnahmen
+
+Keine realen personenbezogenen Daten, Zugangscodes, Passwörter oder vollständigen Datenbanken mitsenden.
+
+## Checkliste für Betreiber
+
+- Standardpasswort sofort ändern
+- Anwendung ausschließlich über HTTPS betreiben
+- Adminbereich nicht unnötig öffentlich bewerben
+- Betriebssystem, Webserver und PHP aktuell halten
+- Datenbank außerhalb des öffentlichen Webroots speichern
+- Schreibrechte auf `data/` und `assets/uploads/` beschränken
+- Ausführung von Skripten im Upload-Ordner verhindern
+- regelmäßige, getestete Backups anlegen
+- nur berechtigten Personen Adminzugriff geben
+- Impressum, Datenschutz und Aufbewahrungsdauer an den eigenen Einsatz anpassen
+
+Die Anwendung ersetzt keine professionelle Sicherheitsprüfung eines konkreten Serverbetriebs.

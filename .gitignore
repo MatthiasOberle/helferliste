@@ -1,0 +1,29 @@
+# Betriebssystem und Entwicklungsumgebungen
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Laufzeitdaten und Sicherungen
+data/
+*.sqlite
+*.sqlite-*
+*.db
+*.log
+*.bak
+*.backup
+
+# Lokale Konfiguration und Geheimnisse
+.env
+.env.*
+!.env.example
+
+# Vom Betreiber hochgeladene Bilder
+www/assets/uploads/*
+!www/assets/uploads/.htaccess
+!www/assets/uploads/index.html
+
+# Veröffentlichungspakete
+*.zip
+*.tar
+*.tar.gz
