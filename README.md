@@ -1,6 +1,10 @@
-# Helferliste
+# Helferliste by MOWST
+
+[![MOWST](https://img.shields.io/badge/Ein_Projekt_von-MOWST-f06418?style=for-the-badge&labelColor=10100f)](https://mowst.de)
 
 Eine schlanke, selbst gehostete Web-Anwendung zur Organisation von Helferinnen und Helfern bei Veranstaltungen. Sie eignet sich für Vereine, Feuerwehren, Hilfsorganisationen, Ortsverbände und andere Gruppen.
+
+Entwickelt und gepflegt von **[MOWST — Digitale Werkstatt](https://mowst.de)**. MOWST baut klare Websites und praktische digitale Werkzeuge für kleine Betriebe, Vereine und gute Ideen.
 
 Helfer benötigen kein Benutzerkonto und keine App. Ein persönlicher vierstelliger Code oder Direktlink genügt. Die Anwendung benötigt weder Framework noch Composer oder Node.js: PHP 8.x und SQLite reichen aus.
 
@@ -158,6 +162,10 @@ Sicherheitshinweise und die vertrauliche Meldung von Schwachstellen beschreibt [
 ## Mitwirken
 
 Fehlerberichte und Verbesserungen sind willkommen. Hinweise für Beiträge stehen in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## MOWST
+
+Die Helferliste ist die erste veröffentlichte Referenz von MOWST. Mehr über die Digitale Werkstatt und weitere Projekte steht auf **[mowst.de](https://mowst.de)**. Direkter Kontakt: [hallo@mowst.de](mailto:hallo@mowst.de).
 
 ## Lizenz
 

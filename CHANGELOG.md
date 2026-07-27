@@ -2,6 +2,15 @@
 
 Alle wichtigen Änderungen dieses Projekts werden hier dokumentiert.
 
+## 1.0.1 – 2026-07-27
+
+### Geändert
+
+- MOWST als Entwickler und Herausgeber der Helferliste ergänzt
+- sichtbare Trennung zwischen Veranstalter, Betreiber und technischer Umsetzung geschaffen
+- Copyright, Projektbeschreibung, Rechtstext-Hinweise und öffentliche Fußzeile auf MOWST ausgerichtet
+- Kontakt und Projektwebsite mit `hallo@mowst.de` und `mowst.de` ergänzt
+
 ## 1.0.0 – 2026-07-24
 
 Erste für eine öffentliche Git-Veröffentlichung vorbereitete Version.

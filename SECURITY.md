@@ -1,5 +1,7 @@
 # Sicherheit
 
+Die Helferliste wird von **[MOWST — Digitale Werkstatt](https://mowst.de)** gepflegt. Allgemeine Rückfragen erreichen uns unter [hallo@mowst.de](mailto:hallo@mowst.de); vertrauliche Sicherheitsmeldungen bitte ausschließlich über den unten beschriebenen privaten GitHub-Kanal senden.
+
 ## Unterstützte Versionen
 
 Sicherheitskorrekturen werden für den jeweils aktuellen Stand des Hauptzweigs und die neueste veröffentlichte Version vorgesehen. Ältere Installationen sollten vor einer Meldung zunächst mit der aktuellen Version verglichen werden.

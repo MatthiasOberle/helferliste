@@ -69,6 +69,11 @@ $imprintReady = trim($name) !== '' && trim($address) !== '' && trim($email) !== 
         <h2>Hinweis</h2>
         <p>Diese Seite dient der internen Organisation von Helferinnen und Helfern für Veranstaltungen.</p>
     </div>
+
+    <div class="card">
+        <h2>Technische Umsetzung</h2>
+        <p>Die Helferliste ist ein Projekt von <a href="<?= h(mowstBrand()['url']) ?>" target="_blank" rel="noopener"><?= h(mowstBrand()['label']) ?></a>.</p>
+    </div>
 </div>
 </body>
 </html>

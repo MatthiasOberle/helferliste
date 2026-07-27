@@ -95,6 +95,17 @@ function appDefaults(): array {
     ];
 }
 
+// Feste Herstellerangabe der Anwendung. Betreiberangaben bleiben davon getrennt
+// und werden weiterhin individuell in den Einstellungen gepflegt.
+function mowstBrand(): array {
+    return [
+        'name' => 'MOWST',
+        'label' => 'MOWST — Digitale Werkstatt',
+        'url' => 'https://mowst.de',
+        'email' => 'hallo@mowst.de',
+    ];
+}
+
 function appSetting(PDO $db, string $key, ?string $fallback = null): string {
     ensureAppSettings($db);
     $defaults = appDefaults();

@@ -95,6 +95,11 @@ $responsibleText = trim($contactName) !== '' ? $contactName : 'die betreibende O
         <h2>7. Auskunft und Berichtigung</h2>
         <p>Betroffene Personen können eine Auskunft oder Berichtigung ihrer gespeicherten Daten anfragen. Änderungen an bereits gespeicherten Rückmeldungen erfolgen nicht automatisch, sondern über einen Änderungswunsch oder direkte Rücksprache.</p>
     </div>
+
+    <div class="card">
+        <h2>Technische Umsetzung</h2>
+        <p>Die Helferliste ist ein Projekt von <a href="<?= h(mowstBrand()['url']) ?>" target="_blank" rel="noopener"><?= h(mowstBrand()['label']) ?></a>. Verantwortlich für die mit dieser Installation verarbeiteten Daten bleibt die oben genannte betreibende Organisation.</p>
+    </div>
 </div>
 </body>
 </html>

@@ -1367,7 +1367,9 @@ publicCsrfToken();
     <footer class="footer">
         <a href="datenschutz.php"><?= h(appText($appConfig, 'text_privacy_link')) ?></a>
         <a href="impressum.php"><?= h(appText($appConfig, 'text_imprint_link')) ?></a>
-        <span>© <?= date('Y') ?> <?= h((string)$appConfig['event_organizer']) ?></span>
+        <span>Veranstaltet von <?= h((string)$appConfig['event_organizer']) ?></span>
+        <a href="<?= h(mowstBrand()['url']) ?>" target="_blank" rel="noopener">Entwickelt von <?= h(mowstBrand()['name']) ?></a>
+        <span>© <?= date('Y') ?> <?= h(mowstBrand()['name']) ?></span>
     </footer>
 </div>
 

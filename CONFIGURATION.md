@@ -2,6 +2,8 @@
 
 Die Git-Version enthält keine persönlichen Betreiber-, Veranstaltungs- oder Kontaktdaten. Diese Checkliste schließt die dadurch bewusst entstandenen Lücken.
 
+Die technische Herstellerangabe verweist auf **[MOWST — Digitale Werkstatt](https://mowst.de)**. Sie ist bewusst von den individuellen Betreiberangaben getrennt und ersetzt kein eigenes Impressum.
+
 ## 1. Zugang absichern
 
 Unter `System → Passwort ändern` das bekannte Standardpasswort sofort durch ein langes, nur hier verwendetes Passwort ersetzen.

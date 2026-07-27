@@ -2,6 +2,8 @@
 
 Beiträge zur Helferliste sind willkommen.
 
+Die Helferliste wird von **[MOWST — Digitale Werkstatt](https://mowst.de)** entwickelt und gepflegt.
+
 ## Fehler melden
 
 Vor einem neuen Issue bitte prüfen, ob der Fehler bereits gemeldet wurde. Eine gute Fehlermeldung enthält:

@@ -2,6 +2,8 @@
 
 Diese Anleitung trennt die technische Installation bewusst von der Funktionsbeschreibung in der [README.md](README.md).
 
+Die Helferliste ist ein Open-Source-Projekt von **[MOWST — Digitale Werkstatt](https://mowst.de)**.
+
 ## Vor dem Start
 
 Benötigt werden:
