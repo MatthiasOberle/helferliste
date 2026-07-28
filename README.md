@@ -83,7 +83,7 @@ Mitgeliefert werden neutrale Motive für Feuerwehr, THW und Notarzt. Eigene PNG-
 
 ## Voraussetzungen
 
-- PHP 8.0 oder neuer
+- PHP 8.3 oder neuer; automatisch geprüft werden PHP 8.3, 8.4 und 8.5
 - PHP-Erweiterungen `pdo_sqlite` und `fileinfo`
 - SQLite 3
 - Webserver mit PHP-Unterstützung, empfohlen: Nginx oder Apache; IIS ist ebenfalls möglich
@@ -129,6 +129,9 @@ Beide Orte gehören nicht in Git und werden durch `.gitignore` ausgeschlossen. F
 ```text
 .
 ├── README.md
+├── ROADMAP.md
+├── tests/
+│   └── smoke.php
 ├── INSTALL.md
 ├── CONFIGURATION.md
 ├── SECURITY.md
@@ -166,6 +169,8 @@ Fehlerberichte und Verbesserungen sind willkommen. Hinweise für Beiträge stehe
 ## MOWST
 
 Die Helferliste ist die erste veröffentlichte Referenz von MOWST. Mehr über die Digitale Werkstatt und weitere Projekte steht auf **[mowst.de](https://mowst.de)**. Direkter Kontakt: [hallo@mowst.de](mailto:hallo@mowst.de).
+
+Die geplanten Ausbaustufen stehen in der [Produkt-Roadmap](ROADMAP.md).
 
 ## Lizenz
 

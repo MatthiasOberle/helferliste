@@ -2,6 +2,19 @@
 
 Alle wichtigen Änderungen dieses Projekts werden hier dokumentiert.
 
+## Unveröffentlicht
+
+### Geändert
+
+- getrennten Entwicklungszweig für den Ausbau zum universellen Produkt vorbereitet
+- Produkt-Roadmap mit klarer Abgrenzung zu SaaS und Mandantenbetrieb ergänzt
+- Mindestversion auf PHP 8.3 angehoben
+- automatische Prüfmatrix auf PHP 8.3, 8.4 und 8.5 aktualisiert
+
+### Ergänzt
+
+- wiederholbaren Smoke-Test für Neuinstallation, Datenbankschema, Fremdschlüssel und Einstellungen ergänzt
+
 ## 1.0.1 – 2026-07-27
 
 ### Geändert

@@ -8,7 +8,7 @@ Die Helferliste ist ein Open-Source-Projekt von **[MOWST — Digitale Werkstatt]
 
 Benötigt werden:
 
-- PHP 8.0 oder neuer
+- PHP 8.3 oder neuer
 - `pdo_sqlite` und `fileinfo`
 - SQLite 3
 - ein Webserver mit PHP-Unterstützung
@@ -165,7 +165,7 @@ Danach HTTPS einrichten, beispielsweise mit Certbot.
 
 Voraussetzungen:
 
-- PHP 8.x für IIS/FastCGI
+- PHP 8.3 oder neuer für IIS/FastCGI
 - aktivierte Erweiterungen `pdo_sqlite` und `fileinfo`
 - IIS mit CGI/FastCGI
 - Schreibrechte für den IIS-Benutzer

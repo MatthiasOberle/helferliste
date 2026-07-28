@@ -13,7 +13,7 @@ jobs:
     name: PHP ${{ matrix.php }}
     strategy:
       matrix:
-        php: ["8.0", "8.3"]
+        php: ["8.3", "8.4", "8.5"]
 
     steps:
       - name: Repository laden
@@ -34,3 +34,6 @@ jobs:
 
       - name: Datenbankschema prüfen
         run: sqlite3 /tmp/helferliste-test.sqlite < Install/database_schema.sql
+
+      - name: Installation und Einstellungen prüfen
+        run: php tests/smoke.php

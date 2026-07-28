@@ -35,7 +35,7 @@ cls
 echo Helferliste Installation fuer Windows Server / XAMPP
 echo ----------------------------------------------------
 echo.
-echo Empfohlen fuer Einsteiger: XAMPP oder IIS mit installiertem PHP 8.x.
+echo Empfohlen fuer Einsteiger: XAMPP oder IIS mit installiertem PHP 8.3 oder neuer.
 echo Dieses Script richtet die App-Dateien ein. PHP mit pdo_sqlite muss bereits funktionieren.
 echo.
 set /p APP_ROOT="Installationsordner [%APP_ROOT%]: "
