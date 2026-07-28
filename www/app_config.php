@@ -309,7 +309,7 @@ function adminNav(string $active = ''): void {
             'settings.php#kopfbild' => ['Kopfbild & Galerie', 'media'],
             'settings.php#design' => ['Design', 'design'],
             'settings.php#texte' => ['Seitentexte', 'texts'],
-            'clear_event.php' => ['Eventdaten löschen', 'clear'],
+            'event_archive.php' => ['Veranstaltung abschließen', 'archive'],
             'admin.php?change_password=1' => ['Passwort ändern', 'password'],
             'admin.php?logout=1' => ['Logout', 'logout'],
         ],
@@ -479,6 +479,7 @@ $adminViewScripts = [
     'edit_entry.php',
     'settings.php',
     'clear_event.php',
+    'event_archive.php',
 ];
 if (in_array(basename((string)($_SERVER['SCRIPT_NAME'] ?? '')), $adminViewScripts, true)) {
     adminViewPreference();

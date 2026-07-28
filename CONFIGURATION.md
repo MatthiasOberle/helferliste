@@ -85,5 +85,7 @@ Zugangscodes können einzeln oder aus einer E-Mail-Liste erzeugt werden. Vor dem
 - Adminzugang nur berechtigten Personen geben.
 - Änderungswünsche zeitnah bearbeiten.
 - Aufbewahrungsdauer festlegen und in den Datenschutzhinweisen nennen.
-- Nach der Veranstaltung benötigte Exporte und Backups erstellen.
-- Eventdaten anschließend über die vorgesehene Adminfunktion löschen.
+- Nach der Veranstaltung unter `System → Veranstaltung abschließen` die angezeigten Summen und offenen Änderungswünsche prüfen.
+- Entscheiden, ob das Archiv ausschließlich anonyme Ergebnisse oder vorübergehend auch personenbezogene Daten enthalten darf. Die datensparsame Voreinstellung ist anonym.
+- Schichten, Seitentexte und Gestaltung bei Bedarf als Vorlage für die nächste Veranstaltung übernehmen.
+- Nicht mehr benötigte personenbezogene Archivdaten kontrolliert exportieren und danach aus dem Archiv löschen.

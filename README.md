@@ -52,8 +52,11 @@ Alle abgebildeten Namen, E-Mail-Adressen, Codes und Veranstaltungsangaben sind f
 - Zugangscodes einzeln oder aus E-Mail-Listen erzeugen
 - persönliche Einladungslinks kopieren
 - ungenutzte Codes bereinigen
-- Veranstaltungsdaten kontrolliert zurücksetzen
+- Veranstaltung kontrolliert abschließen und aktive Daten zurücksetzen
 - Admin-Passwort in der Oberfläche ändern
+- automatische Sicherung beim Abschluss und Start der nächsten Veranstaltung aus einer Vorlage
+- abgeschlossene Veranstaltungen mit anonymen Ergebnissen und Schichtauslastung archivieren
+- personenbezogene Archivdaten optional exportieren und kontrolliert löschen
 - umschaltbare Mobil- und Desktopansicht
 
 ### Anpassung ohne Programmierkenntnisse
@@ -124,7 +127,7 @@ Alle veränderlichen Daten liegen in:
 
 Beide Orte gehören nicht in Git und werden durch `.gitignore` ausgeschlossen. Für ein vollständiges Backup müssen beide gesichert werden. Der Linux-Installer erhält vorhandene Bild-Uploads bei einer Aktualisierung.
 
-Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php` prüft Neuinstallationen und Aktualisierungen, erstellt vor notwendigen Migrationen eine konsistente SQLite-Sicherung und bricht bei Integritätsfehlern ab.
+Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php` prüft Neuinstallationen und Aktualisierungen, erstellt vor notwendigen Migrationen eine konsistente SQLite-Sicherung und bricht bei Integritätsfehlern ab. `Install/restore.php` stellt eine Sicherung geprüft wieder her und sichert zuvor nochmals den aktuell aktiven Datenbankstand.
 
 ## Projektstruktur
 
@@ -135,6 +138,8 @@ Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php`
 ├── tests/
 │   ├── smoke.php
 │   ├── migration.php
+│   ├── restore.php
+│   ├── event_lifecycle.php
 │   └── http_admin_setup.sh
 ├── INSTALL.md
 ├── CONFIGURATION.md
@@ -146,16 +151,19 @@ Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php`
 │   ├── database_schema.sql
 │   ├── migration_lib.php
 │   ├── migrate.php
+│   ├── restore.php
 │   ├── reset_admin.php
 │   ├── migrations/
 │   │   ├── 001_baseline.sql
-│   │   └── 002_secure_admin_setup.sql
+│   │   ├── 002_secure_admin_setup.sql
+│   │   └── 003_event_archives.sql
 │   ├── install_helferliste.sh
 │   └── install_helferliste_windows.bat
 └── www/
     ├── version.php
     ├── index.php
     ├── admin.php
+    ├── event_archive.php
     ├── settings.php
     ├── weitere PHP-Dateien
     └── assets/

@@ -49,6 +49,7 @@ try {
         'event_log',
         'app_settings',
         'schema_migrations',
+        'event_archives',
     ];
 
     foreach ($requiredTables as $table) {

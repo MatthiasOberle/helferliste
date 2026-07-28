@@ -41,5 +41,11 @@ jobs:
       - name: Aktualisierung und Datenerhalt prüfen
         run: php tests/migration.php
 
+      - name: Wiederherstellung prüfen
+        run: php tests/restore.php
+
+      - name: Veranstaltungsabschluss prüfen
+        run: php tests/event_lifecycle.php
+
       - name: Sichere Admin-Ersteinrichtung prüfen
         run: bash tests/http_admin_setup.sh

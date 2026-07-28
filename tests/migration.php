@@ -25,15 +25,10 @@ if (!mkdir($testDirectory, 0770, true) && !is_dir($testDirectory)) {
 }
 
 try {
-    $schema = file_get_contents($projectRoot . '/Install/database_schema.sql');
-    if ($schema === false) {
-        migrationFail('Datenbankschema konnte nicht gelesen werden.');
-    }
-
     // Simuliert eine vorhandene 1.0.x-Datenbank ohne formale Schema-Version.
-    $legacySchema = preg_replace('/PRAGMA user_version = \d+;/', 'PRAGMA user_version = 0;', $schema);
-    if ($legacySchema === null) {
-        migrationFail('Altes Testschema konnte nicht erzeugt werden.');
+    $legacySchema = file_get_contents($projectRoot . '/Install/migrations/001_baseline.sql');
+    if ($legacySchema === false) {
+        migrationFail('Altes Testschema konnte nicht gelesen werden.');
     }
     $legacyDb = new PDO('sqlite:' . $databaseFile);
     $legacyDb->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -83,6 +78,7 @@ try {
     migrationAssert('Testfest', (string)$migratedDb->query("SELECT setting_value FROM app_settings WHERE setting_key = 'event_name'")->fetchColumn(), 'Vorhandene Einstellung ging verloren.');
     migrationAssert($existingPasswordHash, (string)$migratedDb->query("SELECT setting_value FROM app_settings WHERE setting_key = 'admin_password_hash'")->fetchColumn(), 'Vorhandenes Admin-Passwort wurde verändert.');
     migrationAssert(1, (int)$migratedDb->query("SELECT COUNT(*) FROM app_settings WHERE setting_key = 'admin_auth_generation' AND setting_value <> ''")->fetchColumn(), 'Vorhandener Adminzugang erhielt keine Sitzungs-Generation.');
+    migrationAssert(1, (int)$migratedDb->query("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'event_archives'")->fetchColumn(), 'Archiv-Tabelle wurde durch die Migration nicht angelegt.');
     migrationAssert(HELFERLISTE_SCHEMA_VERSION, (int)$migratedDb->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn(), 'Migrationen wurden nicht vollständig protokolliert.');
     $migratedDb = null;
 

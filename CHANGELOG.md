@@ -17,11 +17,16 @@ Alle wichtigen Änderungen dieses Projekts werden hier dokumentiert.
 ### Ergänzt
 
 - wiederholbaren Smoke-Test für Neuinstallation, Datenbankschema, Fremdschlüssel und Einstellungen ergänzt
-- Anwendungsversion `1.1.0-dev` und fortlaufende Datenbank-Schema-Version eingeführt
+- Anwendungsversion und fortlaufende Datenbank-Schema-Version eingeführt; Entwicklungsstand auf `1.2.0-dev` angehoben
 - konsistente SQLite-Sicherung vor notwendigen Migrationen ergänzt
 - Aktualisierungstest mit Erhalt vorhandener Zugangscodes, Rückmeldungen und Einstellungen ergänzt
 - sicheren serverseitigen Admin-Reset mit Vorab-Sicherung und neuem Einrichtungscode ergänzt
 - Integrationstest für Ersteinrichtung, Anmeldung, Reset und Entzug bestehender Sitzungen ergänzt
+- geprüftes Wiederherstellungswerkzeug mit automatischer Sicherung des zuvor aktiven Stands ergänzt
+- sicheren Veranstaltungsabschluss mit Vorab-Sicherung, Ergebnisarchiv und direktem Start der nächsten Veranstaltung ergänzt
+- anonyme Archivierung als Voreinstellung sowie optionalen Export und kontrollierte Löschung personenbezogener Archivdaten ergänzt
+- wiederverwendbare Archivvorlagen für Schichten, Texte, Gestaltung und Einstellungen ergänzt
+- automatisierte Tests für Wiederherstellung, Archiv, Vorlagen und Datenschutz ergänzt
 
 ## 1.0.1 – 2026-07-27
 

@@ -234,7 +234,16 @@ Für ein vollständiges Backup:
 
 Vor dem Kopieren einer aktiven SQLite-Datenbank sollte nach Möglichkeit kurz der Schreibzugriff gestoppt oder die SQLite-Backup-Funktion verwendet werden. Zur Wiederherstellung beide Sicherungen an ihre ursprünglichen Orte zurückkopieren und Besitz/Rechte prüfen.
 
-Vor einer automatischen Schemaänderung erzeugte Datenbanksicherungen liegen standardmäßig unter `data/backups/`. Zur Wiederherstellung zuerst den Webzugriff kurz stoppen, die aktuelle Datenbank zusätzlich sichern, die gewünschte Sicherungsdatei als `helferliste.sqlite` einsetzen und anschließend Rechte sowie `PRAGMA quick_check` und `PRAGMA foreign_key_check` prüfen.
+Vor einer automatischen Schemaänderung und vor einem Veranstaltungsabschluss erzeugte Datenbanksicherungen liegen standardmäßig unter `data/backups/`. Zur geprüften Wiederherstellung zuerst den Webzugriff stoppen und dann ausführen:
+
+```bash
+sudo php Install/restore.php \
+  /var/www/helferliste/data/backups/GEWUENSCHTE-SICHERUNG.sqlite \
+  /var/www/helferliste/data/helferliste.sqlite \
+  /var/www/helferliste/data/backups
+```
+
+Das Werkzeug prüft die Sicherung, legt vor dem Austausch eine weitere Sicherung des aktuell aktiven Stands an, ersetzt die Datenbank atomar und führt bei Bedarf die aktuellen Migrationen aus. Anschließend Besitz und Rechte der Datenbank kontrollieren und den Webzugriff wieder starten. Eigene Kopfbilder müssen weiterhin separat aus der Sicherung von `assets/uploads/` wiederhergestellt werden.
 
 ## Häufige Probleme
 

@@ -3,41 +3,11 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/www/version.php';
+require_once dirname(__DIR__) . '/www/database_tools.php';
 
 function helferlisteDatabaseVersion(PDO $db): int
 {
     return (int)$db->query('PRAGMA user_version')->fetchColumn();
-}
-
-function helferlisteAssertDatabaseIntegrity(PDO $db): void
-{
-    $quickCheck = (string)$db->query('PRAGMA quick_check')->fetchColumn();
-    if ($quickCheck !== 'ok') {
-        throw new RuntimeException('SQLite-Integritätsprüfung fehlgeschlagen: ' . $quickCheck);
-    }
-
-    $foreignKeyErrors = $db->query('PRAGMA foreign_key_check')->fetchAll(PDO::FETCH_ASSOC);
-    if ($foreignKeyErrors !== []) {
-        throw new RuntimeException('Die Datenbank enthält ungültige Fremdschlüssel-Beziehungen.');
-    }
-}
-
-function helferlisteCreateNamedBackup(PDO $db, string $backupDirectory, string $baseName): string
-{
-    if (!is_dir($backupDirectory) && !mkdir($backupDirectory, 0770, true) && !is_dir($backupDirectory)) {
-        throw new RuntimeException('Backup-Ordner konnte nicht angelegt werden: ' . $backupDirectory);
-    }
-
-    $backupFile = rtrim($backupDirectory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $baseName . '.sqlite';
-    $suffix = 2;
-
-    while (file_exists($backupFile)) {
-        $backupFile = rtrim($backupDirectory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $baseName . '-' . $suffix . '.sqlite';
-        $suffix++;
-    }
-
-    $db->exec('VACUUM INTO ' . $db->quote($backupFile));
-    return $backupFile;
 }
 
 function helferlisteCreateMigrationBackup(PDO $db, string $backupDirectory, int $fromVersion): string
@@ -54,11 +24,100 @@ function helferlisteCreateMigrationBackup(PDO $db, string $backupDirectory, int 
     );
 }
 
+/**
+ * Stellt eine SQLite-Sicherung atomar wieder her. Eine vorhandene Zieldatenbank
+ * wird zuvor ihrerseits gesichert; anschließend läuft die normale Migration.
+ *
+ * @return array{safety_backup:?string,from_version:int,to_version:int,migrated:bool}
+ */
+function helferlisteRestoreDatabase(string $backupFile, string $databaseFile, ?string $backupDirectory = null): array
+{
+    if (!is_file($backupFile) || filesize($backupFile) === 0) {
+        throw new RuntimeException('Die ausgewählte Sicherung existiert nicht oder ist leer.');
+    }
+    if (realpath($backupFile) !== false && realpath($backupFile) === realpath($databaseFile)) {
+        throw new RuntimeException('Sicherung und Zieldatenbank dürfen nicht dieselbe Datei sein.');
+    }
+
+    $databaseDirectory = dirname($databaseFile);
+    if (!is_dir($databaseDirectory) && !mkdir($databaseDirectory, 0770, true) && !is_dir($databaseDirectory)) {
+        throw new RuntimeException('Zielordner konnte nicht angelegt werden: ' . $databaseDirectory);
+    }
+    $backupDirectory ??= $databaseDirectory . DIRECTORY_SEPARATOR . 'backups';
+
+    $source = new PDO('sqlite:' . $backupFile);
+    $source->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $source->exec('PRAGMA foreign_keys = ON');
+    helferlisteAssertDatabaseIntegrity($source);
+    $fromVersion = helferlisteDatabaseVersion($source);
+
+    $temporaryFile = $databaseDirectory . DIRECTORY_SEPARATOR . '.helferliste-restore-' . bin2hex(random_bytes(8)) . '.sqlite';
+    $source->exec('VACUUM INTO ' . $source->quote($temporaryFile));
+    $source = null;
+
+    $temporaryDb = new PDO('sqlite:' . $temporaryFile);
+    $temporaryDb->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $temporaryDb->exec('PRAGMA foreign_keys = ON');
+    helferlisteAssertDatabaseIntegrity($temporaryDb);
+    $temporaryDb = null;
+
+    $safetyBackup = null;
+    $swapFile = null;
+    try {
+        if (is_file($databaseFile) && filesize($databaseFile) > 0) {
+            $current = new PDO('sqlite:' . $databaseFile);
+            $current->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $current->exec('PRAGMA foreign_keys = ON');
+            helferlisteAssertDatabaseIntegrity($current);
+            $current->exec('PRAGMA wal_checkpoint(TRUNCATE)');
+            $journalMode = strtolower((string)$current->query('PRAGMA journal_mode = DELETE')->fetchColumn());
+            if ($journalMode !== 'delete') {
+                throw new RuntimeException('Die Zieldatenbank ist noch aktiv. Bitte den Webzugriff vor der Wiederherstellung vollständig stoppen.');
+            }
+            $safetyBackup = helferlisteCreateNamedBackup(
+                $current,
+                $backupDirectory,
+                'helferliste-vor-wiederherstellung-' . date('Ymd-His')
+            );
+            $current = null;
+
+            $swapFile = $databaseFile . '.vor-wiederherstellung-' . bin2hex(random_bytes(4));
+            if (!rename($databaseFile, $swapFile)) {
+                throw new RuntimeException('Die vorhandene Datenbank konnte nicht für die Wiederherstellung vorbereitet werden.');
+            }
+        }
+
+        if (!rename($temporaryFile, $databaseFile)) {
+            if ($swapFile !== null && is_file($swapFile)) {
+                rename($swapFile, $databaseFile);
+            }
+            throw new RuntimeException('Die wiederhergestellte Datenbank konnte nicht aktiviert werden.');
+        }
+        if ($swapFile !== null && is_file($swapFile)) {
+            unlink($swapFile);
+        }
+    } catch (Throwable $error) {
+        if (is_file($temporaryFile)) {
+            unlink($temporaryFile);
+        }
+        throw $error;
+    }
+
+    $migration = helferlisteMigrateDatabase($databaseFile, $backupDirectory);
+    return [
+        'safety_backup' => $safetyBackup,
+        'from_version' => $fromVersion,
+        'to_version' => $migration['to_version'],
+        'migrated' => $migration['from_version'] !== $migration['to_version'],
+    ];
+}
+
 function helferlisteApplyMigration(PDO $db, int $version): void
 {
     $migrationFiles = [
         1 => __DIR__ . '/migrations/001_baseline.sql',
         2 => __DIR__ . '/migrations/002_secure_admin_setup.sql',
+        3 => __DIR__ . '/migrations/003_event_archives.sql',
     ];
     $migrationFile = $migrationFiles[$version] ?? null;
     if ($migrationFile === null) {

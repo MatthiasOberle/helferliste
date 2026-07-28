@@ -11,9 +11,11 @@ REM   Install\install_helferliste_windows.bat
 REM   Install\database_schema.sql
 REM   Install\migrate.php
 REM   Install\migration_lib.php
+REM   Install\restore.php
 REM   Install\reset_admin.php
 REM   Install\migrations\001_baseline.sql
 REM   Install\migrations\002_secure_admin_setup.sql
+REM   Install\migrations\003_event_archives.sql
 REM
 REM Das Script kopiert die Webdateien, erstellt die SQLite-
 REM Datenbank und setzt einfache Rechte. PHP wird nicht

@@ -92,9 +92,13 @@ Abgeschlossen:
 - lokalen Installations-Smoke-Test automatisiert
 - Versions- und Migrationsmechanismus mit Sicherung und Datenerhalt eingeführt
 - sichere Admin-Ersteinrichtung ohne allgemein bekanntes Standardpasswort eingeführt
+- Backup-Wiederherstellung mit automatischer Rückfallsicherung getestet
+- Veranstaltungsabschluss mit Vorab-Sicherung und Ergebnisarchiv umgesetzt
+- anonyme Archivierung als Standard sowie optionalen Export und Löschung personenbezogener Archivdaten umgesetzt
+- direkte Wiederverwendung von Schichten, Texten und Gestaltung sowie gespeicherte Archivvorlagen umgesetzt
 
 Als Nächstes:
 
-1. Backup-Wiederherstellung und zentrale Kernabläufe weiter automatisieren.
-2. Sicheren Veranstaltungsabschluss mit Archiv und Vorlage umsetzen.
-3. Danach flexible Schichtarten und geführte Einrichtung ausbauen.
+1. Zeitraum und Status einer Veranstaltung ergänzen.
+2. Frei benennbare Schichtarten und strukturierte Schichtfelder ausbauen.
+3. Danach geführte Einrichtung, CSV-Import und Druckansichten umsetzen.
