@@ -13,6 +13,7 @@ Alle wichtigen Änderungen dieses Projekts werden hier dokumentiert.
 - Linux- und Windows-Installer auf den gemeinsamen Migrationsmechanismus umgestellt
 - allgemein bekanntes Standardpasswort durch einmaligen, zufälligen Einrichtungscode ersetzt
 - Mindestlänge für neue Admin-Passwörter auf 12 Zeichen angehoben
+- Entwicklungsstand auf `1.3.0-dev` und Datenbankschema 4 angehoben
 
 ### Ergänzt
 
@@ -27,6 +28,12 @@ Alle wichtigen Änderungen dieses Projekts werden hier dokumentiert.
 - anonyme Archivierung als Voreinstellung sowie optionalen Export und kontrollierte Löschung personenbezogener Archivdaten ergänzt
 - wiederverwendbare Archivvorlagen für Schichten, Texte, Gestaltung und Einstellungen ergänzt
 - automatisierte Tests für Wiederherstellung, Archiv, Vorlagen und Datenschutz ergänzt
+- Veranstaltungsbeginn, Veranstaltungsende und die Status Entwurf, Veröffentlicht und Abgeschlossen ergänzt
+- öffentliche Rückmeldungen für Entwürfe und abgeschlossene Veranstaltungen zuverlässig gesperrt
+- Freigabeprüfung für Veranstaltung, URL, Schichten, Impressum und Datenschutzkontakt ergänzt
+- strukturierte Schichtfelder für Datum, Beginn, Ende, Ort, Kapazität und öffentlichen Hinweis ergänzt
+- Schichten duplizierbar gemacht und beide Schichtkategorien im Adminbereich frei benennbar dargestellt
+- Archiv, Vorlagen, Statistik und Exporte um strukturierte Schichtangaben erweitert
 
 ## 1.0.1 – 2026-07-27
 

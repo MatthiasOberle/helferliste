@@ -201,13 +201,14 @@ Nach jeder neuen Installation:
 
 1. Einmaligen Einrichtungscode verwenden und eigenes Admin-Passwort festlegen.
 2. `System → Einstellungen` öffnen.
-3. App-Name, Organisation und Veranstaltung eintragen.
+3. App-Name, Organisation, Veranstaltungszeitraum und Status eintragen.
 4. öffentliche Basis-URL kontrollieren.
 5. Impressum und Datenschutzkontakt vollständig ausfüllen.
 6. Kopfbild, Farben, Schriftart und öffentliche Texte prüfen.
-7. Beispielschichten löschen oder bearbeiten.
-8. echte Schichten anlegen.
-9. Zugangscodes erstellen und einen vollständigen Test durchführen.
+7. Beispielschichten löschen oder mit Datum, Uhrzeit, Ort, Kapazität und Hinweis bearbeiten.
+8. echte Schichten anlegen und die Freigabeprüfung kontrollieren.
+9. Veranstaltung veröffentlichen.
+10. Zugangscodes erstellen und einen vollständigen Test durchführen.
 
 Details enthält [CONFIGURATION.md](CONFIGURATION.md).
 

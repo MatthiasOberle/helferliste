@@ -8,6 +8,7 @@ $db = new PDO('sqlite:' . __DIR__ . '/../data/helferliste.sqlite');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 require_once __DIR__ . '/app_config.php';
+require_once __DIR__ . '/shift_helpers.php';
 require_once __DIR__ . '/tracking.php';
 $appConfig = appConfig($db);
 
@@ -140,6 +141,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Allgemeine Projekt- und Eventangaben speichern. Diese Werte werden auf der öffentlichen Seite, in Codes, Impressum und Datenschutz genutzt.
     if ($action === 'save_app_settings') {
+        try {
+        $eventStartDate = normalizeOptionalDate((string)($_POST['event_start_date'] ?? ''));
+        $eventEndDate = normalizeOptionalDate((string)($_POST['event_end_date'] ?? ''));
+        if ($eventEndDate !== '' && $eventStartDate === '') {
+            throw new InvalidArgumentException('Für ein Enddatum muss auch ein Startdatum angegeben werden.');
+        }
+        if ($eventStartDate !== '' && $eventEndDate !== '' && $eventEndDate < $eventStartDate) {
+            throw new InvalidArgumentException('Das Veranstaltungsende darf nicht vor dem Beginn liegen.');
+        }
+        $eventStatus = (string)($_POST['event_status'] ?? 'draft');
+        if (!in_array($eventStatus, ['draft', 'published', 'closed'], true)) {
+            throw new InvalidArgumentException('Der Veranstaltungsstatus ist ungültig.');
+        }
+
         $fields = [
             'app_name' => 80,
             'event_organizer' => 120,
@@ -148,6 +163,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'public_login_info_text' => 1200,
             'hero_image_alt' => 160,
             'text_login_heading' => 160,
+            'text_event_draft_notice' => 300,
+            'text_event_closed_notice' => 300,
             'text_login_intro' => 500,
             'text_code_label' => 160,
             'text_code_help' => 500,
@@ -207,9 +224,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'privacy_contact_email' => 160,
         ];
 
+        $candidateConfig = $appConfig;
         foreach ($fields as $field => $maxLength) {
-            saveAppSetting($db, $field, limitText((string)($_POST[$field] ?? ''), $maxLength));
+            $candidateConfig[$field] = limitText((string)($_POST[$field] ?? ''), $maxLength);
         }
+        $candidateConfig['event_start_date'] = $eventStartDate;
+        $candidateConfig['event_end_date'] = $eventEndDate;
+        $candidateConfig['event_status'] = $eventStatus;
+        if ($eventStatus === 'published') {
+            $publicationIssues = appPublicationIssues($db, $candidateConfig);
+            if ($publicationIssues !== []) {
+                throw new InvalidArgumentException('Vor der Veröffentlichung fehlen: ' . implode(', ', $publicationIssues) . '.');
+            }
+        }
+
+        foreach ($fields as $field => $maxLength) {
+            saveAppSetting($db, $field, (string)$candidateConfig[$field]);
+        }
+        saveAppSetting($db, 'event_start_date', $eventStartDate);
+        saveAppSetting($db, 'event_end_date', $eventEndDate);
+        saveAppSetting($db, 'event_status', $eventStatus);
 
         $colorFields = [
             'primary_color' => '#b00020',
@@ -244,10 +278,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         logEvent($db, 'app_settings_saved', 'Projekt-Einstellungen wurden geändert.');
         $message = 'Einstellungen wurden gespeichert.';
         $appConfig = appConfig($db);
+        } catch (Throwable $exception) {
+            $error = $exception->getMessage();
+        }
     }
 }
 
 $heroImages = heroImageGallery();
+$publicationIssues = appPublicationIssues($db, $appConfig);
 
 ?><!doctype html>
 <html lang="de">
@@ -267,6 +305,8 @@ $heroImages = heroImageGallery();
         .notice { padding: 12px; border-radius: 10px; margin-bottom: 14px; }
         .success { background: var(--good); border: 1px solid #9ed3a8; }
         .error { background: var(--bad); border: 1px solid #e2a0a0; }
+        .readiness { background:#fff7df; border:1px solid #e5cb72; padding:12px; border-radius:10px; margin:12px 0; }
+        .readiness.ready { background:#eaf8ee; border-color:#9ed3aa; }
         .muted { color: #666; font-size: .92rem; }
         .admin-nav { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
         .admin-nav a { display: inline-block; border-radius: 999px; padding: 9px 12px; background: #eee; color: #222; font-weight: bold; text-decoration: none; }
@@ -274,7 +314,7 @@ $heroImages = heroImageGallery();
         .admin-nav a.right { margin-left: auto; }
         .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
         .field label, label.block-label { display: block; font-weight: bold; margin-bottom: 5px; }
-        textarea, input[type="text"], select { width: 100%; border: 1px solid #bbb; border-radius: 8px; padding: 8px; font: inherit; background:#fff; }
+        textarea, input[type="text"], input[type="date"], select { width: 100%; border: 1px solid #bbb; border-radius: 8px; padding: 8px; font: inherit; background:#fff; }
         input[type="color"] { width: 100%; min-height: 44px; border: 1px solid #bbb; border-radius: 8px; padding: 4px; background: #fff; cursor: pointer; }
         textarea { resize: vertical; }
         .section-divider { border-top: 1px solid #eee; margin-top: 18px; padding-top: 18px; }
@@ -356,6 +396,11 @@ $heroImages = heroImageGallery();
     <div class="card">
         <h2>Projektangaben, Infotext, Impressum und Datenschutz</h2>
         <p class="muted">Diese Angaben machen die Anwendung wiederverwendbar. Organisation, Eventname, öffentlicher Infotext und Kontaktdaten werden zentral gepflegt.</p>
+        <?php if ($publicationIssues === []): ?>
+            <div class="readiness ready"><strong>Bereit zur Veröffentlichung:</strong> Die technischen Pflichtangaben sind vollständig.</div>
+        <?php else: ?>
+            <div class="readiness"><strong>Vor der Veröffentlichung noch ergänzen:</strong><ul><?php foreach ($publicationIssues as $issue): ?><li><?= h($issue) ?></li><?php endforeach; ?></ul></div>
+        <?php endif; ?>
         <form method="post">
             <?= csrfField() ?>
             <input type="hidden" name="action" value="save_app_settings">
@@ -365,6 +410,16 @@ $heroImages = heroImageGallery();
                 <div class="field"><label>Name der Anwendung</label><input type="text" name="app_name" maxlength="80" value="<?= h((string)$appConfig['app_name']) ?>"></div>
                 <div class="field"><label>Organisation / Veranstalter</label><input type="text" name="event_organizer" maxlength="120" value="<?= h((string)$appConfig['event_organizer']) ?>"></div>
                 <div class="field"><label>Eventname / Untertitel</label><input type="text" name="event_name" maxlength="160" value="<?= h((string)$appConfig['event_name']) ?>"></div>
+                <div class="field"><label>Beginn</label><input type="date" name="event_start_date" value="<?= h((string)$appConfig['event_start_date']) ?>"></div>
+                <div class="field"><label>Ende</label><input type="date" name="event_end_date" value="<?= h((string)$appConfig['event_end_date']) ?>"></div>
+                <div class="field">
+                    <label for="event_status">Status</label>
+                    <select id="event_status" name="event_status">
+                        <option value="draft" <?= appEventStatus($appConfig) === 'draft' ? 'selected' : '' ?>>Entwurf – öffentlich gesperrt</option>
+                        <option value="published" <?= appEventStatus($appConfig) === 'published' ? 'selected' : '' ?>>Veröffentlicht – Rückmeldungen möglich</option>
+                        <option value="closed" <?= appEventStatus($appConfig) === 'closed' ? 'selected' : '' ?>>Abgeschlossen – öffentlich gesperrt</option>
+                    </select>
+                </div>
                 <div class="field"><label>Öffentliche Basis-URL</label><input type="text" name="public_base_url" maxlength="200" value="<?= h((string)$appConfig['public_base_url']) ?>"></div>
             </div>
 
@@ -428,6 +483,8 @@ $heroImages = heroImageGallery();
                     <div class="text-settings-group">
                         <h4>Code-Eingabe und Helferübersicht</h4>
                         <div class="settings-grid">
+                            <div class="field"><label>Hinweis im Entwurf</label><input type="text" name="text_event_draft_notice" value="<?= h(appText($appConfig, 'text_event_draft_notice')) ?>"></div>
+                            <div class="field"><label>Hinweis nach Abschluss</label><input type="text" name="text_event_closed_notice" value="<?= h(appText($appConfig, 'text_event_closed_notice')) ?>"></div>
                             <div class="field"><label>Überschrift</label><input type="text" name="text_login_heading" value="<?= h(appText($appConfig, 'text_login_heading')) ?>"></div>
                             <div class="field"><label>Einleitung</label><textarea name="text_login_intro" rows="2"><?= h(appText($appConfig, 'text_login_intro')) ?></textarea></div>
                             <div class="field"><label>Code-Feld</label><input type="text" name="text_code_label" value="<?= h(appText($appConfig, 'text_code_label')) ?>"></div>

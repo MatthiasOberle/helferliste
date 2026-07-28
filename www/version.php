@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-const HELFERLISTE_VERSION = '1.2.0-dev';
-const HELFERLISTE_SCHEMA_VERSION = 3;
+const HELFERLISTE_VERSION = '1.3.0-dev';
+const HELFERLISTE_SCHEMA_VERSION = 4;
 
 function helferlisteRequireCurrentSchema(PDO $db): void
 {

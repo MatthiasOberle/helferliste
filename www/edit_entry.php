@@ -6,6 +6,7 @@ $db = new PDO('sqlite:' . __DIR__ . '/../data/helferliste.sqlite');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 require_once __DIR__ . '/app_config.php';
+require_once __DIR__ . '/shift_helpers.php';
 $appConfig = appConfig($db);
 
 function h(string $value): string {
@@ -190,9 +191,7 @@ if (!$entry) {
 
 $shifts = $db->query("
     SELECT
-        s.id,
-        s.title,
-        s.max_slots,
+        s.*,
         COUNT(es.entry_id) AS used_slots
     FROM shifts s
     LEFT JOIN entry_shifts es ON es.shift_id = s.id
@@ -203,9 +202,7 @@ $shifts = $db->query("
 
 $springerShifts = $db->query("
     SELECT
-        s.id,
-        s.title,
-        s.max_slots,
+        s.*,
         COUNT(es.entry_id) AS used_slots
     FROM springer_shifts s
     LEFT JOIN entry_springer_shifts es ON es.springer_shift_id = s.id
@@ -352,7 +349,7 @@ $currentSpringerShifts = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN))
             </label>
 
             <div id="shiftArea" class="<?= $entry['status'] === 'help' ? '' : 'hidden' ?>">
-                <h2>Normale Schichten</h2>
+                <h2><?= h(appText($appConfig, 'text_normal_shifts_heading')) ?></h2>
 
                 <?php foreach ($shifts as $shift): ?>
                     <?php $checked = in_array((int)$shift['id'], $currentShifts, true); ?>
@@ -365,12 +362,14 @@ $currentSpringerShifts = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN))
                         >
                         <span>
                             <strong><?= h($shift['title']) ?></strong><br>
+                            <?php if (shiftScheduleText($shift) !== ''): ?><span class="small"><?= h(shiftScheduleText($shift)) ?></span><br><?php endif; ?>
+                            <?php if (trim((string)($shift['note'] ?? '')) !== ''): ?><span class="small"><?= nl2br(h((string)$shift['note'])) ?></span><br><?php endif; ?>
                             <span class="small"><?= (int)$shift['used_slots'] ?> / <?= (int)$shift['max_slots'] ?> belegt</span>
                         </span>
                     </label>
                 <?php endforeach; ?>
 
-                <h2>Springer-Schichten</h2>
+                <h2><?= h(appText($appConfig, 'text_flexible_shifts_heading')) ?></h2>
 
                 <?php foreach ($springerShifts as $shift): ?>
                     <?php $checked = in_array((int)$shift['id'], $currentSpringerShifts, true); ?>
@@ -383,6 +382,8 @@ $currentSpringerShifts = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN))
                         >
                         <span>
                             <strong><?= h($shift['title']) ?></strong><br>
+                            <?php if (shiftScheduleText($shift) !== ''): ?><span class="small"><?= h(shiftScheduleText($shift)) ?></span><br><?php endif; ?>
+                            <?php if (trim((string)($shift['note'] ?? '')) !== ''): ?><span class="small"><?= nl2br(h((string)$shift['note'])) ?></span><br><?php endif; ?>
                             <span class="small"><?= (int)$shift['used_slots'] ?> / <?= (int)$shift['max_slots'] ?> Springer belegt</span>
                         </span>
                     </label>

@@ -34,8 +34,12 @@ try {
 
     saveAppSetting($db, 'event_name', 'Testfest 2026');
     saveAppSetting($db, 'event_organizer', 'Beispielverein');
+    saveAppSetting($db, 'event_start_date', '2026-07-10');
+    saveAppSetting($db, 'event_end_date', '2026-07-12');
+    saveAppSetting($db, 'event_status', 'published');
     saveAppSetting($db, 'text_login_heading', 'Eigene Einladung');
     saveAppSetting($db, 'primary_color', '#123456');
+    $db->exec("UPDATE shifts SET shift_date = '2026-07-10', start_time = '16:00', end_time = '20:00', location = 'Festplatz', note = 'Bitte Handschuhe mitbringen' WHERE id = 1");
     $db->exec("INSERT INTO access_codes (email, code, created_at) VALUES ('erika@example.org', '4242', datetime('now'))");
     $codeId = (int)$db->lastInsertId();
     $stmt = $db->prepare("INSERT INTO entries (name, status, note, created_at, access_code_id) VALUES (?, 'help', ?, datetime('now'), ?)");
@@ -47,6 +51,8 @@ try {
 
     $result = archiveAndStartNextEvent($db, $databaseFile, $backupDirectory, [
         'next_event_name' => 'Testfest 2027',
+        'next_event_start_date' => '2027-07-09',
+        'next_event_end_date' => '2027-07-11',
         'keep_shifts' => true,
         'keep_texts' => true,
         'keep_design' => true,
@@ -59,6 +65,8 @@ try {
     eventTestAssert(0, (int)$db->query('SELECT COUNT(*) FROM access_codes')->fetchColumn(), 'Alte Zugangscodes wurden nicht entfernt.');
     eventTestAssert(0, (int)$db->query('SELECT COUNT(*) FROM entries')->fetchColumn(), 'Alte Rückmeldungen wurden nicht entfernt.');
     eventTestAssert('Testfest 2027', eventSetting($db, 'event_name'), 'Nächste Veranstaltung wurde nicht gestartet.');
+    eventTestAssert('2027-07-09', eventSetting($db, 'event_start_date'), 'Beginn der nächsten Veranstaltung fehlt.');
+    eventTestAssert('draft', eventSetting($db, 'event_status'), 'Neue Veranstaltung wurde nicht sicher als Entwurf gestartet.');
     eventTestAssert(3, (int)$db->query('SELECT COUNT(*) FROM shifts')->fetchColumn(), 'Schichtvorlage wurde nicht übernommen.');
     eventTestAssert('Eigene Einladung', eventSetting($db, 'text_login_heading'), 'Seitentexte wurden nicht übernommen.');
     eventTestAssert('#123456', eventSetting($db, 'primary_color'), 'Design wurde nicht übernommen.');
@@ -68,8 +76,11 @@ try {
     $summary = eventJsonDecode((string)$archive['summary_json']);
     eventTestAssert(1, (int)$summary['responses'], 'Archivierte Rückmeldezahl ist falsch.');
     eventTestAssert(1, (int)$summary['normal_shifts'][0]['assigned'], 'Archivierte Schichtbelegung ist falsch.');
+    eventTestAssert('2026-07-10', (string)$summary['event_start_date'], 'Archivierter Veranstaltungsbeginn fehlt.');
+    eventTestAssert('Festplatz', (string)$summary['normal_shifts'][0]['location'], 'Strukturierte Schichtangaben fehlen im Archiv.');
     $personal = eventJsonDecode((string)$archive['personal_data_json']);
     eventTestAssert('Erika Beispiel', (string)$personal[0]['name'], 'Archivierte Personendaten sind unvollständig.');
+    eventTestAssert(true, str_contains((string)$personal[0]['normal_shifts'][0], 'Festplatz'), 'Personenexport enthält die strukturierten Schichtangaben nicht.');
     eventTestAssert(false, str_contains((string)$archive['personal_data_json'], '4242'), 'Zugangscode wurde unzulässig archiviert.');
 
     eventTestAssert(true, deleteArchivedPersonalData($db, (int)$archive['id']), 'Personendaten konnten nicht kontrolliert gelöscht werden.');
@@ -101,6 +112,8 @@ try {
     eventTestAssert(3, (int)$db->query('SELECT COUNT(*) FROM shifts')->fetchColumn(), 'Archivvorlage hat Schichten nicht wiederhergestellt.');
     eventTestAssert('Eigene Einladung', appSetting($db, 'text_login_heading'), 'Archivvorlage hat Seitentexte nicht wiederhergestellt.');
     eventTestAssert('#123456', appSetting($db, 'primary_color'), 'Archivvorlage hat Design nicht wiederhergestellt.');
+    eventTestAssert('Festplatz', (string)$db->query('SELECT location FROM shifts ORDER BY id LIMIT 1')->fetchColumn(), 'Archivvorlage hat strukturierte Schichtangaben nicht wiederhergestellt.');
+    eventTestAssert('draft', appSetting($db, 'event_status'), 'Archivvorlage wurde nicht als Entwurf gestartet.');
 
     fwrite(STDOUT, "OK: Veranstaltungsabschluss, Archiv, Vorlage und Datenschutz funktionieren.\n");
 } catch (Throwable $error) {

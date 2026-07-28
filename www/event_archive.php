@@ -71,6 +71,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $result = archiveAndStartNextEvent($db, $databaseFile, dirname($databaseFile) . '/backups', [
                 'next_event_name' => trim((string)($_POST['next_event_name'] ?? '')),
+                'next_event_start_date' => trim((string)($_POST['next_event_start_date'] ?? '')),
+                'next_event_end_date' => trim((string)($_POST['next_event_end_date'] ?? '')),
                 'keep_shifts' => isset($_POST['keep_shifts']),
                 'keep_texts' => isset($_POST['keep_texts']),
                 'keep_design' => isset($_POST['keep_design']),
@@ -105,7 +107,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $databaseFile,
                 dirname($databaseFile) . '/backups',
                 $archiveId,
-                trim((string)($_POST['template_event_name'] ?? ''))
+                trim((string)($_POST['template_event_name'] ?? '')),
+                trim((string)($_POST['template_event_start_date'] ?? '')),
+                trim((string)($_POST['template_event_end_date'] ?? ''))
             );
             $message = 'Die Archivvorlage wurde übernommen. Zuvor wurde automatisch eine Datenbanksicherung angelegt.';
             $appConfig = appConfig($db);
@@ -150,7 +154,7 @@ foreach ($archives as $archive) {
         label { display:block; font-weight:700; margin:13px 0 5px; }
         label.option { display:flex; align-items:flex-start; gap:9px; font-weight:400; margin:10px 0; }
         label.option input { margin-top:5px; }
-        input[type="text"] { width:100%; padding:11px; border:1px solid #aeb7c4; border-radius:9px; font:inherit; }
+        input[type="text"],input[type="date"] { width:100%; padding:11px; border:1px solid #aeb7c4; border-radius:9px; font:inherit; }
         .btn,button { display:inline-block; border:0; border-radius:10px; padding:11px 14px; background:var(--primary); color:#fff; font-weight:700; text-decoration:none; cursor:pointer; }
         .secondary { background:#475569; }
         .danger { background:#8b0000; }
@@ -168,7 +172,7 @@ foreach ($archives as $archive) {
 <main class="wrap">
     <div class="card">
         <h1>Veranstaltung abschließen</h1>
-        <p class="muted">Aktiv: <?= h($currentEventName) ?></p>
+        <p class="muted">Aktiv: <?= h($currentEventName) ?><?= appEventDateRange($appConfig) !== '' ? ' · ' . h(appEventDateRange($appConfig)) : '' ?> · <?= h(appEventStatusLabel($appConfig)) ?></p>
         <?php adminNav('archive'); ?>
     </div>
 
@@ -190,6 +194,11 @@ foreach ($archives as $archive) {
             <input type="hidden" name="action" value="archive_event">
             <label for="next_event_name">Name der nächsten Veranstaltung</label>
             <input id="next_event_name" name="next_event_name" type="text" maxlength="160" required placeholder="Zum Beispiel: Sommerfest 2027">
+            <div class="grid">
+                <div><label for="next_event_start_date">Beginn optional</label><input id="next_event_start_date" name="next_event_start_date" type="date"></div>
+                <div><label for="next_event_end_date">Ende optional</label><input id="next_event_end_date" name="next_event_end_date" type="date"></div>
+            </div>
+            <p class="muted">Die neue Veranstaltung startet immer als Entwurf und muss nach der Kontrolle ausdrücklich veröffentlicht werden.</p>
 
             <h3 style="margin-top:20px;">Als Vorlage übernehmen</h3>
             <label class="option"><input type="checkbox" name="keep_shifts" checked> <span>Schichten und Kapazitäten behalten</span></label>
@@ -211,12 +220,17 @@ foreach ($archives as $archive) {
             <p class="muted">Noch keine Veranstaltung archiviert.</p>
         <?php else: ?>
             <div class="table-wrap"><table>
-                <thead><tr><th>Abgeschlossen</th><th>Veranstaltung</th><th>Organisation</th><th>Personendaten</th><th>Aktion</th></tr></thead>
+                <thead><tr><th>Abgeschlossen</th><th>Veranstaltung</th><th>Zeitraum</th><th>Organisation</th><th>Personendaten</th><th>Aktion</th></tr></thead>
                 <tbody>
                 <?php foreach ($archives as $archive): ?>
+                    <?php $archiveSummary = eventJsonDecode((string)$archive['summary_json']); ?>
                     <tr>
                         <td><?= h((string)$archive['closed_at']) ?></td>
                         <td><?= h((string)$archive['event_name']) ?></td>
+                        <td><?= h(appEventDateRange([
+                            'event_start_date' => (string)($archiveSummary['event_start_date'] ?? ''),
+                            'event_end_date' => (string)($archiveSummary['event_end_date'] ?? ''),
+                        ])) ?></td>
                         <td><?= h((string)$archive['event_organizer']) ?></td>
                         <td><?= (int)$archive['includes_personal_data'] === 1 ? 'enthalten' : 'nicht enthalten' ?></td>
                         <td><a class="btn secondary" href="event_archive.php?id=<?= (int)$archive['id'] ?>">Ansehen</a></td>
@@ -247,10 +261,10 @@ foreach ($archives as $archive) {
                 <div class="table-wrap"><table>
                     <thead><tr><th>Art</th><th>Schicht</th><th>Belegt</th><th>Kapazität</th></tr></thead><tbody>
                     <?php foreach (($summary['normal_shifts'] ?? []) as $shift): ?>
-                        <tr><td>Normal</td><td><?= h((string)$shift['title']) ?></td><td><?= (int)$shift['assigned'] ?></td><td><?= (int)$shift['max_slots'] ?></td></tr>
+                        <tr><td>Normal</td><td><?= h(shiftDisplayLabel($shift)) ?><?= trim((string)($shift['note'] ?? '')) !== '' ? '<br><span class="muted">' . nl2br(h((string)$shift['note'])) . '</span>' : '' ?></td><td><?= (int)$shift['assigned'] ?></td><td><?= (int)$shift['max_slots'] ?></td></tr>
                     <?php endforeach; ?>
                     <?php foreach (($summary['flexible_shifts'] ?? []) as $shift): ?>
-                        <tr><td>Flexibel</td><td><?= h((string)$shift['title']) ?></td><td><?= (int)$shift['assigned'] ?></td><td><?= (int)$shift['max_slots'] ?></td></tr>
+                        <tr><td>Flexibel</td><td><?= h(shiftDisplayLabel($shift)) ?><?= trim((string)($shift['note'] ?? '')) !== '' ? '<br><span class="muted">' . nl2br(h((string)$shift['note'])) . '</span>' : '' ?></td><td><?= (int)$shift['assigned'] ?></td><td><?= (int)$shift['max_slots'] ?></td></tr>
                     <?php endforeach; ?>
                     </tbody></table></div>
             </details>
@@ -264,6 +278,10 @@ foreach ($archives as $archive) {
                     <input type="hidden" name="archive_id" value="<?= (int)$selectedArchive['id'] ?>">
                     <label for="template_event_name">Name der neuen Veranstaltung</label>
                     <input id="template_event_name" name="template_event_name" type="text" maxlength="160" required>
+                    <div class="grid">
+                        <div><label for="template_event_start_date">Beginn optional</label><input id="template_event_start_date" name="template_event_start_date" type="date"></div>
+                        <div><label for="template_event_end_date">Ende optional</label><input id="template_event_end_date" name="template_event_end_date" type="date"></div>
+                    </div>
                     <label for="template_confirmation">Zur Bestätigung <code>VORLAGE UEBERNEHMEN</code> eingeben</label>
                     <input id="template_confirmation" name="confirmation" type="text" autocomplete="off" required>
                     <button type="submit" style="margin-top:12px;">Vorlage übernehmen</button>

@@ -24,7 +24,12 @@ CREATE TABLE IF NOT EXISTS shifts (
     title TEXT NOT NULL,
     max_slots INTEGER NOT NULL DEFAULT 1,
     sort_order INTEGER NOT NULL DEFAULT 1,
-    active INTEGER NOT NULL DEFAULT 1
+    active INTEGER NOT NULL DEFAULT 1,
+    shift_date TEXT,
+    start_time TEXT,
+    end_time TEXT,
+    location TEXT,
+    note TEXT
 );
 
 CREATE TABLE IF NOT EXISTS springer_shifts (
@@ -32,7 +37,12 @@ CREATE TABLE IF NOT EXISTS springer_shifts (
     title TEXT NOT NULL,
     max_slots INTEGER NOT NULL DEFAULT 1,
     sort_order INTEGER NOT NULL DEFAULT 1,
-    active INTEGER NOT NULL DEFAULT 1
+    active INTEGER NOT NULL DEFAULT 1,
+    shift_date TEXT,
+    start_time TEXT,
+    end_time TEXT,
+    location TEXT,
+    note TEXT
 );
 
 CREATE TABLE IF NOT EXISTS entry_shifts (
@@ -123,4 +133,4 @@ INSERT INTO event_log (created_at, action, detail)
 SELECT datetime('now'), 'installed', 'Helferliste wurde eingerichtet.'
 WHERE NOT EXISTS (SELECT 1 FROM event_log WHERE action = 'installed');
 
-PRAGMA user_version = 3;
+PRAGMA user_version = 4;

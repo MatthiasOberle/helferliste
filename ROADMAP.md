@@ -96,9 +96,12 @@ Abgeschlossen:
 - Veranstaltungsabschluss mit Vorab-Sicherung und Ergebnisarchiv umgesetzt
 - anonyme Archivierung als Standard sowie optionalen Export und Löschung personenbezogener Archivdaten umgesetzt
 - direkte Wiederverwendung von Schichten, Texten und Gestaltung sowie gespeicherte Archivvorlagen umgesetzt
+- Veranstaltungszeitraum und Status mit öffentlicher Sperre für Entwurf und Abschluss umgesetzt
+- Freigabeprüfung vor Veröffentlichung ergänzt
+- strukturierte Schichtfelder und Duplizieren von Schichten umgesetzt
 
 Als Nächstes:
 
-1. Zeitraum und Status einer Veranstaltung ergänzen.
-2. Frei benennbare Schichtarten und strukturierte Schichtfelder ausbauen.
-3. Danach geführte Einrichtung, CSV-Import und Druckansichten umsetzen.
+1. Geführte Ersteinrichtung über die bereits sichere Passwortvergabe hinaus ausbauen.
+2. CSV-Import für Kontakte umsetzen.
+3. Druckansichten für Schichtplan und Anwesenheitslisten ergänzen.

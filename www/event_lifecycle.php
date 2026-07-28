@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/app_config.php';
 require_once __DIR__ . '/database_tools.php';
+require_once __DIR__ . '/shift_helpers.php';
 
 function eventJsonEncode(array $value): string
 {
@@ -26,7 +27,7 @@ function eventSetting(PDO $db, string $key, string $fallback = ''): string
 
 function eventShiftSummary(PDO $db, string $table, string $linkTable, string $linkColumn): array
 {
-    $sql = "SELECT s.title, s.max_slots, s.sort_order, s.active, COUNT(es.entry_id) AS assigned
+    $sql = "SELECT s.*, COUNT(es.entry_id) AS assigned
         FROM {$table} s
         LEFT JOIN {$linkTable} es ON es.{$linkColumn} = s.id
         GROUP BY s.id
@@ -39,6 +40,11 @@ function eventShiftSummary(PDO $db, string $table, string $linkTable, string $li
         'sort_order' => (int)$row['sort_order'],
         'active' => (int)$row['active'] === 1,
         'assigned' => (int)$row['assigned'],
+        'shift_date' => (string)($row['shift_date'] ?? ''),
+        'start_time' => (string)($row['start_time'] ?? ''),
+        'end_time' => (string)($row['end_time'] ?? ''),
+        'location' => (string)($row['location'] ?? ''),
+        'note' => (string)($row['note'] ?? ''),
     ], $rows);
 }
 
@@ -50,6 +56,9 @@ function eventSummary(PDO $db): array
         'helps' => (int)$db->query("SELECT COUNT(*) FROM entries WHERE status = 'help'")->fetchColumn(),
         'declines' => (int)$db->query("SELECT COUNT(*) FROM entries WHERE status = 'no_time'")->fetchColumn(),
         'open_change_requests' => (int)$db->query("SELECT COUNT(*) FROM change_requests WHERE status = 'open'")->fetchColumn(),
+        'event_start_date' => eventSetting($db, 'event_start_date'),
+        'event_end_date' => eventSetting($db, 'event_end_date'),
+        'event_status' => eventSetting($db, 'event_status', 'published'),
         'normal_shifts' => eventShiftSummary($db, 'shifts', 'entry_shifts', 'shift_id'),
         'flexible_shifts' => eventShiftSummary($db, 'springer_shifts', 'entry_springer_shifts', 'springer_shift_id'),
     ];
@@ -59,7 +68,7 @@ function eventTemplate(PDO $db): array
 {
     $settings = [];
     foreach (appDefaults() as $key => $fallback) {
-        if ($key !== 'event_name') {
+        if (!in_array($key, ['event_name', 'event_start_date', 'event_end_date', 'event_status'], true)) {
             $settings[$key] = appSetting($db, $key, (string)$fallback);
         }
     }
@@ -78,10 +87,10 @@ function eventPersonalResults(PDO $db): array
         LEFT JOIN access_codes ac ON ac.id = e.access_code_id
         ORDER BY e.created_at, e.id")->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-    $normalStmt = $db->prepare("SELECT s.title FROM entry_shifts es
+    $normalStmt = $db->prepare("SELECT s.* FROM entry_shifts es
         JOIN shifts s ON s.id = es.shift_id
         WHERE es.entry_id = ? ORDER BY s.sort_order, s.id");
-    $flexibleStmt = $db->prepare("SELECT s.title FROM entry_springer_shifts es
+    $flexibleStmt = $db->prepare("SELECT s.* FROM entry_springer_shifts es
         JOIN springer_shifts s ON s.id = es.springer_shift_id
         WHERE es.entry_id = ? ORDER BY s.sort_order, s.id");
     $requestStmt = $db->prepare("SELECT message, requested_at, status, handled_at, admin_note
@@ -93,14 +102,16 @@ function eventPersonalResults(PDO $db): array
         $normalStmt->execute([$entryId]);
         $flexibleStmt->execute([$entryId]);
         $requestStmt->execute([$entryId]);
+        $normalRows = $normalStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $flexibleRows = $flexibleStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
         $result[] = [
             'name' => (string)$entry['name'],
             'email' => (string)($entry['email'] ?? ''),
             'status' => (string)$entry['status'],
             'note' => (string)($entry['note'] ?? ''),
             'created_at' => (string)($entry['created_at'] ?? ''),
-            'normal_shifts' => $normalStmt->fetchAll(PDO::FETCH_COLUMN) ?: [],
-            'flexible_shifts' => $flexibleStmt->fetchAll(PDO::FETCH_COLUMN) ?: [],
+            'normal_shifts' => array_map('shiftDisplayLabel', $normalRows),
+            'flexible_shifts' => array_map('shiftDisplayLabel', $flexibleRows),
             'change_requests' => $requestStmt->fetchAll(PDO::FETCH_ASSOC) ?: [],
         ];
     }
@@ -141,7 +152,7 @@ function resetEventSettings(PDO $db, bool $keepTexts, bool $keepDesign): void
 }
 
 /**
- * @param array{next_event_name:string,keep_shifts:bool,keep_texts:bool,keep_design:bool,retain_personal_data:bool} $options
+ * @param array{next_event_name:string,next_event_start_date?:string,next_event_end_date?:string,keep_shifts:bool,keep_texts:bool,keep_design:bool,retain_personal_data:bool} $options
  * @return array{archive_id:int,backup_file:string}
  */
 function archiveAndStartNextEvent(PDO $db, string $databaseFile, string $backupDirectory, array $options): array
@@ -150,11 +161,19 @@ function archiveAndStartNextEvent(PDO $db, string $databaseFile, string $backupD
     $eventName = trim(eventSetting($db, 'event_name', appDefaults()['event_name']));
     $organizer = trim(eventSetting($db, 'event_organizer', appDefaults()['event_organizer']));
     $nextEventName = trim($options['next_event_name']);
+    $nextStartDate = normalizeOptionalDate((string)($options['next_event_start_date'] ?? ''));
+    $nextEndDate = normalizeOptionalDate((string)($options['next_event_end_date'] ?? ''));
     if ($eventName === '' || $nextEventName === '') {
         throw new InvalidArgumentException('Aktuelle und nächste Veranstaltung benötigen einen Namen.');
     }
     if (strlen($nextEventName) > 160) {
         throw new InvalidArgumentException('Der Name der nächsten Veranstaltung ist zu lang.');
+    }
+    if ($nextEndDate !== '' && $nextStartDate === '') {
+        throw new InvalidArgumentException('Für das Enddatum der nächsten Veranstaltung muss ein Startdatum angegeben werden.');
+    }
+    if ($nextStartDate !== '' && $nextEndDate !== '' && $nextEndDate < $nextStartDate) {
+        throw new InvalidArgumentException('Das Ende der nächsten Veranstaltung darf nicht vor ihrem Beginn liegen.');
     }
 
     $summary = eventSummary($db);
@@ -192,6 +211,9 @@ function archiveAndStartNextEvent(PDO $db, string $databaseFile, string $backupD
         }
         resetEventSettings($db, $options['keep_texts'], $options['keep_design']);
         saveAppSetting($db, 'event_name', $nextEventName);
+        saveAppSetting($db, 'event_start_date', $nextStartDate);
+        saveAppSetting($db, 'event_end_date', $nextEndDate);
+        saveAppSetting($db, 'event_status', 'draft');
         $logStmt = $db->prepare("INSERT INTO event_log (created_at, action, detail) VALUES (datetime('now'), 'event_started', ?)");
         $logStmt->execute(['Neue Veranstaltung gestartet: ' . $nextEventName . '. Archiv #' . $archiveId . '.']);
         $db->commit();
@@ -223,11 +245,21 @@ function startEventFromArchiveTemplate(
     string $databaseFile,
     string $backupDirectory,
     int $archiveId,
-    string $eventName
+    string $eventName,
+    string $eventStartDate = '',
+    string $eventEndDate = ''
 ): array {
     $eventName = trim($eventName);
+    $eventStartDate = normalizeOptionalDate($eventStartDate);
+    $eventEndDate = normalizeOptionalDate($eventEndDate);
     if ($archiveId <= 0 || $eventName === '' || strlen($eventName) > 160) {
         throw new InvalidArgumentException('Archiv und Veranstaltungsname müssen gültig sein.');
+    }
+    if ($eventEndDate !== '' && $eventStartDate === '') {
+        throw new InvalidArgumentException('Für ein Enddatum muss auch ein Startdatum angegeben werden.');
+    }
+    if ($eventStartDate !== '' && $eventEndDate !== '' && $eventEndDate < $eventStartDate) {
+        throw new InvalidArgumentException('Das Veranstaltungsende darf nicht vor dem Beginn liegen.');
     }
     $activeRecords = (int)$db->query('SELECT (SELECT COUNT(*) FROM entries) + (SELECT COUNT(*) FROM access_codes)')->fetchColumn();
     if ($activeRecords > 0) {
@@ -254,35 +286,52 @@ function startEventFromArchiveTemplate(
         $db->exec('DELETE FROM shifts');
         $deleteSetting = $db->prepare('DELETE FROM app_settings WHERE setting_key = ?');
         foreach (array_keys(appDefaults()) as $key) {
-            if ($key !== 'event_name') {
+            if (!in_array($key, ['event_name', 'event_start_date', 'event_end_date', 'event_status'], true)) {
                 $deleteSetting->execute([$key]);
             }
         }
         foreach (($template['settings'] ?? []) as $key => $value) {
-            if ($key !== 'event_name' && array_key_exists($key, appDefaults())) {
+            if (!in_array($key, ['event_name', 'event_start_date', 'event_end_date', 'event_status'], true) && array_key_exists($key, appDefaults())) {
                 saveAppSetting($db, (string)$key, (string)$value);
             }
         }
 
-        $insertShift = $db->prepare('INSERT INTO shifts (title, max_slots, sort_order, active) VALUES (?, ?, ?, ?)');
+        $insertShift = $db->prepare('INSERT INTO shifts
+            (title, max_slots, sort_order, active, shift_date, start_time, end_time, location, note)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
         foreach (($template['normal_shifts'] ?? []) as $shift) {
             $insertShift->execute([
                 (string)($shift['title'] ?? ''),
                 max(1, (int)($shift['max_slots'] ?? 1)),
                 max(1, (int)($shift['sort_order'] ?? 1)),
                 !empty($shift['active']) ? 1 : 0,
+                (string)($shift['shift_date'] ?? ''),
+                (string)($shift['start_time'] ?? ''),
+                (string)($shift['end_time'] ?? ''),
+                (string)($shift['location'] ?? ''),
+                (string)($shift['note'] ?? ''),
             ]);
         }
-        $insertFlexible = $db->prepare('INSERT INTO springer_shifts (title, max_slots, sort_order, active) VALUES (?, ?, ?, ?)');
+        $insertFlexible = $db->prepare('INSERT INTO springer_shifts
+            (title, max_slots, sort_order, active, shift_date, start_time, end_time, location, note)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
         foreach (($template['flexible_shifts'] ?? []) as $shift) {
             $insertFlexible->execute([
                 (string)($shift['title'] ?? ''),
                 max(1, (int)($shift['max_slots'] ?? 1)),
                 max(1, (int)($shift['sort_order'] ?? 1)),
                 !empty($shift['active']) ? 1 : 0,
+                (string)($shift['shift_date'] ?? ''),
+                (string)($shift['start_time'] ?? ''),
+                (string)($shift['end_time'] ?? ''),
+                (string)($shift['location'] ?? ''),
+                (string)($shift['note'] ?? ''),
             ]);
         }
         saveAppSetting($db, 'event_name', $eventName);
+        saveAppSetting($db, 'event_start_date', $eventStartDate);
+        saveAppSetting($db, 'event_end_date', $eventEndDate);
+        saveAppSetting($db, 'event_status', 'draft');
         $logStmt = $db->prepare("INSERT INTO event_log (created_at, action, detail) VALUES (datetime('now'), 'archive_template_applied', ?)");
         $logStmt->execute(['Vorlage aus Archiv #' . $archiveId . ' (' . (string)$archive['event_name'] . ') übernommen.']);
         $db->commit();

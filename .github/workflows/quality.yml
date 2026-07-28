@@ -47,5 +47,8 @@ jobs:
       - name: Veranstaltungsabschluss prüfen
         run: php tests/event_lifecycle.php
 
+      - name: Zeitraum, Status und Schichtfelder prüfen
+        run: php tests/scheduling.php
+
       - name: Sichere Admin-Ersteinrichtung prüfen
         run: bash tests/http_admin_setup.sh

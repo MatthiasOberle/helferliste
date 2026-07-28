@@ -17,8 +17,13 @@ $db = new PDO('sqlite:' . __DIR__ . '/../data/helferliste.sqlite');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 require_once __DIR__ . '/app_config.php';
+require_once __DIR__ . '/shift_helpers.php';
 require_once __DIR__ . '/tracking.php';
 $appConfig = appConfig($db);
+$eventAcceptsResponses = appEventAcceptsResponses($appConfig);
+$eventStatusNotice = appEventStatus($appConfig) === 'closed'
+    ? appText($appConfig, 'text_event_closed_notice')
+    : appText($appConfig, 'text_event_draft_notice');
 
 function h(string $value): string {
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
@@ -103,13 +108,14 @@ function getCodeEntry(PDO $db, int $accessCodeId): ?array {
 }
 
 function getEntryShiftTitles(PDO $db, int $entryId, string $linkTable, string $shiftTable, string $column): array {
-    $stmt = $db->prepare("SELECT s.title
+    $stmt = $db->prepare("SELECT s.*
         FROM {$linkTable} es
         JOIN {$shiftTable} s ON s.id = es.{$column}
         WHERE es.entry_id = ?
         ORDER BY s.sort_order ASC, s.id ASC");
     $stmt->execute([$entryId]);
-    return $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    return array_map('shiftDisplayLabel', $rows);
 }
 
 // Lädt nur aktive Schichten für die öffentliche Auswahl.
@@ -180,6 +186,8 @@ function publicShiftOverviewRows(PDO $db, array $shifts, string $linkTable, stri
             'free' => max(0, $max - $used),
             'percent' => fillPercent($used, $max),
             'class' => fillClass($used, $max),
+            'schedule' => shiftScheduleText($shift),
+            'note' => trim((string)($shift['note'] ?? '')),
         ];
     }
     return $rows;
@@ -191,6 +199,10 @@ $changeMessage = '';
 $loginError = '';
 $overviewError = '';
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$eventAcceptsResponses) {
+    $error = $eventStatusNotice;
+}
+
 if (isset($_GET['logout'])) {
     unset($_SESSION['access_code'], $_SESSION['can_view_public_stats_for']);
     header('Location: index.php');
@@ -200,14 +212,14 @@ if (isset($_GET['logout'])) {
 // Direktlinks aus der E-Mail melden den Code einmalig an und entfernen ihn danach aus der URL.
 if (isset($_GET['code'])) {
     $getCode = cleanCode((string)$_GET['code']);
-    if ($getCode !== '' && getAccessCode($db, $getCode)) {
+    if ($eventAcceptsResponses && $getCode !== '' && getAccessCode($db, $getCode)) {
         $_SESSION['access_code'] = $getCode;
     }
     header('Location: index.php');
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'login') {
+if ($eventAcceptsResponses && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'login') {
     if (!verifyPublicCsrfToken()) {
         $loginError = 'Ungültige oder abgelaufene Formular-Sitzung. Bitte Seite neu laden und erneut versuchen.';
     } else {
@@ -226,7 +238,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'login
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'view_public_stats') {
+if ($eventAcceptsResponses && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'view_public_stats') {
     if (!verifyPublicCsrfToken()) {
         $overviewError = 'Ungültige oder abgelaufene Formular-Sitzung. Bitte Seite neu laden und erneut versuchen.';
     } else {
@@ -268,7 +280,7 @@ if ($statsSessionAccessCodeId > 0 && !$statsSessionEntry) {
 $canViewPublicStats = (bool)$existingEntry || $statsSessionAccessCodeId > 0;
 
 // Nach einer gespeicherten Rückmeldung läuft alles Weitere über Änderungswünsche.
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $accessCodeId && ($_POST['action'] ?? '') === 'request_change') {
+if ($eventAcceptsResponses && $_SERVER['REQUEST_METHOD'] === 'POST' && $accessCodeId && ($_POST['action'] ?? '') === 'request_change') {
     if (!verifyPublicCsrfToken()) {
         $error = 'Ungültige oder abgelaufene Formular-Sitzung. Bitte Seite neu laden und erneut versuchen.';
     } elseif (!$existingEntry) {
@@ -293,7 +305,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $accessCodeId && ($_POST['action'] 
 }
 
 // Speichern der eigentlichen Rückmeldung inklusive normaler und Springer-Schichten.
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $accessCodeId && ($_POST['action'] ?? '') === 'save_entry') {
+if ($eventAcceptsResponses && $_SERVER['REQUEST_METHOD'] === 'POST' && $accessCodeId && ($_POST['action'] ?? '') === 'save_entry') {
     $existingEntry = getCodeEntry($db, $accessCodeId);
 
     if (!verifyPublicCsrfToken()) {
@@ -1090,6 +1102,7 @@ publicCsrfToken();
             <div class="hero-copy">
                 <h1><?= h(appTitle($appConfig)) ?></h1>
                 <?php if (appSubtitle($appConfig) !== ''): ?><p><?= h(appSubtitle($appConfig)) ?></p><?php endif; ?>
+                <?php if (appEventDateRange($appConfig) !== ''): ?><p class="mobile-hint"><?= h(appEventDateRange($appConfig)) ?></p><?php endif; ?>
             </div>
 
             <div class="hero-visual">
@@ -1105,7 +1118,18 @@ publicCsrfToken();
     <?php if ($overviewError !== ''): ?><div class="notice error"><?= h($overviewError) ?></div><?php endif; ?>
 
     <main class="main-card">
-        <?php if (!$accessCodeId): ?>
+        <?php if (!$eventAcceptsResponses): ?>
+            <section class="card-section">
+                <div class="section-head">
+                    <span class="step-dot">i</span>
+                    <div>
+                        <h2><?= h(appEventStatusLabel($appConfig)) ?></h2>
+                        <p class="subtext"><?= nl2br(h($eventStatusNotice)) ?></p>
+                    </div>
+                </div>
+                <?php if (appEventDateRange($appConfig) !== ''): ?><div class="notice info">Zeitraum: <?= h(appEventDateRange($appConfig)) ?></div><?php endif; ?>
+            </section>
+        <?php elseif (!$accessCodeId): ?>
             <section class="card-section login-primary">
                 <div class="section-head">
                     <span class="step-dot">1</span>
@@ -1272,6 +1296,8 @@ publicCsrfToken();
                                     <input type="checkbox" name="shifts[]" value="<?= (int)$shift['id'] ?>" <?= $full ? 'disabled' : '' ?>>
                                     <span>
                                         <strong><?= h((string)$shift['title']) ?></strong>
+                                        <?php if (shiftScheduleText($shift) !== ''): ?><span class="meta"><?= h(shiftScheduleText($shift)) ?></span><?php endif; ?>
+                                        <?php if (trim((string)($shift['note'] ?? '')) !== ''): ?><span class="meta"><?= nl2br(h((string)$shift['note'])) ?></span><?php endif; ?>
                                         <span class="meta"><?= $full ? h(appText($appConfig, 'text_full')) : $free . ' ' . h(appText($appConfig, 'text_free')) ?> · <?= $used ?> / <?= $max ?> <?= h(appText($appConfig, 'text_occupied')) ?></span>
                                     </span>
                                 </label>
@@ -1294,6 +1320,8 @@ publicCsrfToken();
                                     <input type="checkbox" name="springer_shifts[]" value="<?= (int)$shift['id'] ?>" <?= $full ? 'disabled' : '' ?>>
                                     <span>
                                         <strong><?= h((string)$shift['title']) ?></strong>
+                                        <?php if (shiftScheduleText($shift) !== ''): ?><span class="meta"><?= h(shiftScheduleText($shift)) ?></span><?php endif; ?>
+                                        <?php if (trim((string)($shift['note'] ?? '')) !== ''): ?><span class="meta"><?= nl2br(h((string)$shift['note'])) ?></span><?php endif; ?>
                                         <span class="meta"><?= $full ? h(appText($appConfig, 'text_full')) : $free . ' ' . h(appText($appConfig, 'text_free')) ?> · <?= $used ?> / <?= $max ?> <?= h(appText($appConfig, 'text_occupied')) ?></span>
                                     </span>
                                 </label>
@@ -1317,7 +1345,7 @@ publicCsrfToken();
             </form>
         <?php endif; ?>
 
-        <?php if ($canViewPublicStats): ?>
+        <?php if ($eventAcceptsResponses && $canViewPublicStats): ?>
             <section class="card-section public-overview" id="helferuebersicht">
                 <div class="section-head">
                     <span class="step-dot">i</span>
@@ -1335,6 +1363,8 @@ publicCsrfToken();
                                 <strong><?= h((string)$row['title']) ?></strong>
                                 <span><?= (int)$row['used'] ?> / <?= (int)$row['max'] ?></span>
                             </div>
+                            <?php if ($row['schedule'] !== ''): ?><p class="overview-note"><?= h((string)$row['schedule']) ?></p><?php endif; ?>
+                            <?php if ($row['note'] !== ''): ?><p class="overview-note"><?= nl2br(h((string)$row['note'])) ?></p><?php endif; ?>
                             <div class="fill-bar"><span class="<?= h((string)$row['class']) ?>" style="width: <?= (int)$row['percent'] ?>%"></span></div>
                             <p class="overview-note"><?= (int)$row['free'] ?> <?= h(appText($appConfig, 'text_space_free')) ?></p>
                         </div>
@@ -1352,6 +1382,8 @@ publicCsrfToken();
                                 <strong><?= h((string)$row['title']) ?></strong>
                                 <span><?= (int)$row['used'] ?> / <?= (int)$row['max'] ?></span>
                             </div>
+                            <?php if ($row['schedule'] !== ''): ?><p class="overview-note"><?= h((string)$row['schedule']) ?></p><?php endif; ?>
+                            <?php if ($row['note'] !== ''): ?><p class="overview-note"><?= nl2br(h((string)$row['note'])) ?></p><?php endif; ?>
                             <div class="fill-bar"><span class="<?= h((string)$row['class']) ?>" style="width: <?= (int)$row['percent'] ?>%"></span></div>
                             <p class="overview-note"><?= (int)$row['free'] ?> <?= h(appText($appConfig, 'text_space_free')) ?></p>
                         </div>

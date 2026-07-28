@@ -49,6 +49,8 @@ Alle abgebildeten Namen, E-Mail-Adressen, Codes und Veranstaltungsangaben sind f
 - Rückmeldungen bearbeiten und löschen
 - Änderungswünsche bearbeiten, ablehnen und dokumentieren
 - normale und flexible Schichten mit Kapazität und Reihenfolge verwalten
+- Datum, Beginn, Ende, Ort und öffentlichen Hinweis je Schicht pflegen
+- Schichten mit allen Angaben duplizieren
 - Zugangscodes einzeln oder aus E-Mail-Listen erzeugen
 - persönliche Einladungslinks kopieren
 - ungenutzte Codes bereinigen
@@ -57,6 +59,8 @@ Alle abgebildeten Namen, E-Mail-Adressen, Codes und Veranstaltungsangaben sind f
 - automatische Sicherung beim Abschluss und Start der nächsten Veranstaltung aus einer Vorlage
 - abgeschlossene Veranstaltungen mit anonymen Ergebnissen und Schichtauslastung archivieren
 - personenbezogene Archivdaten optional exportieren und kontrolliert löschen
+- Veranstaltung als Entwurf, veröffentlicht oder abgeschlossen verwalten
+- Veröffentlichung erst nach verständlicher Prüfung der technischen Pflichtangaben
 - umschaltbare Mobil- und Desktopansicht
 
 ### Anpassung ohne Programmierkenntnisse
@@ -140,6 +144,7 @@ Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php`
 │   ├── migration.php
 │   ├── restore.php
 │   ├── event_lifecycle.php
+│   ├── scheduling.php
 │   └── http_admin_setup.sh
 ├── INSTALL.md
 ├── CONFIGURATION.md
@@ -156,7 +161,8 @@ Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php`
 │   ├── migrations/
 │   │   ├── 001_baseline.sql
 │   │   ├── 002_secure_admin_setup.sql
-│   │   └── 003_event_archives.sql
+│   │   ├── 003_event_archives.sql
+│   │   └── 004_event_schedule_and_shift_fields.sql
 │   ├── install_helferliste.sh
 │   └── install_helferliste_windows.bat
 └── www/
@@ -164,6 +170,7 @@ Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php`
     ├── index.php
     ├── admin.php
     ├── event_archive.php
+    ├── shift_helpers.php
     ├── settings.php
     ├── weitere PHP-Dateien
     └── assets/

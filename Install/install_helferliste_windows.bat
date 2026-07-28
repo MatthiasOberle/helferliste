@@ -16,6 +16,7 @@ REM   Install\reset_admin.php
 REM   Install\migrations\001_baseline.sql
 REM   Install\migrations\002_secure_admin_setup.sql
 REM   Install\migrations\003_event_archives.sql
+REM   Install\migrations\004_event_schedule_and_shift_fields.sql
 REM
 REM Das Script kopiert die Webdateien, erstellt die SQLite-
 REM Datenbank und setzt einfache Rechte. PHP wird nicht

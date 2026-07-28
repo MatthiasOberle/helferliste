@@ -15,10 +15,13 @@ Unter `System → Einstellungen` ausfüllen:
 - App-Name, zum Beispiel `Helferliste`
 - Name der Organisation
 - Name und Zeitraum der Veranstaltung
+- Status `Entwurf`, `Veröffentlicht` oder `Abgeschlossen`
 - öffentliche Basis-URL mit `https://`, ohne abschließenden Schrägstrich
 - optionaler zusätzlicher Hinweis auf der Anmeldeseite
 
 Die Basis-URL wird für persönliche Einladungslinks benötigt. Bleibt sie leer, versucht die Anwendung die aktuell aufgerufene Adresse zu verwenden.
+
+Neue Veranstaltungen starten nach einem Archivabschluss grundsätzlich als Entwurf. Vor der Veröffentlichung prüft die Anwendung Veranstaltungsname, Organisation, Beginn, Basis-URL, aktive Schichten, Impressum und Datenschutzkontakt. Entwürfe und abgeschlossene Veranstaltungen zeigen öffentlich nur einen konfigurierbaren Hinweis und nehmen keine Codes oder Rückmeldungen an.
 
 ## 3. Rechtliche Angaben
 
@@ -62,10 +65,12 @@ Im Bereich `Seitentexte` alle Überschriften, Hilfetexte, Feldnamen und Schaltfl
 Die mitgelieferten Schichten sind nur Beispiele. Vor dem Echtbetrieb:
 
 1. Beispiele bearbeiten oder löschen.
-2. Titel mit Datum und Uhrzeit eindeutig formulieren.
-3. maximale Personenzahl festlegen.
-4. Reihenfolge prüfen.
-5. Springer-Schichten nur anlegen, wenn sie organisatorisch verwendet werden.
+2. verständlichen Titel vergeben.
+3. Datum, Beginn, Ende und Ort in den dafür vorgesehenen Feldern pflegen.
+4. optional einen öffentlich sichtbaren Hinweis ergänzen.
+5. maximale Personenzahl und Reihenfolge festlegen.
+6. wiederkehrende Schichten bei Bedarf duplizieren und anschließend anpassen.
+7. Die Namen beider Schichtkategorien lassen sich über die öffentlichen Seitentexte frei an den eigenen Ablauf anpassen.
 
 ## 7. Codes und Einladungen
 

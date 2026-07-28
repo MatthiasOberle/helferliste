@@ -79,6 +79,10 @@ try {
     migrationAssert($existingPasswordHash, (string)$migratedDb->query("SELECT setting_value FROM app_settings WHERE setting_key = 'admin_password_hash'")->fetchColumn(), 'Vorhandenes Admin-Passwort wurde verändert.');
     migrationAssert(1, (int)$migratedDb->query("SELECT COUNT(*) FROM app_settings WHERE setting_key = 'admin_auth_generation' AND setting_value <> ''")->fetchColumn(), 'Vorhandener Adminzugang erhielt keine Sitzungs-Generation.');
     migrationAssert(1, (int)$migratedDb->query("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'event_archives'")->fetchColumn(), 'Archiv-Tabelle wurde durch die Migration nicht angelegt.');
+    $shiftColumns = $migratedDb->query('PRAGMA table_info(shifts)')->fetchAll(PDO::FETCH_COLUMN, 1);
+    foreach (['shift_date', 'start_time', 'end_time', 'location', 'note'] as $column) {
+        migrationAssert(true, in_array($column, $shiftColumns, true), 'Strukturiertes Schichtfeld fehlt nach der Migration: ' . $column);
+    }
     migrationAssert(HELFERLISTE_SCHEMA_VERSION, (int)$migratedDb->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn(), 'Migrationen wurden nicht vollständig protokolliert.');
     $migratedDb = null;
 

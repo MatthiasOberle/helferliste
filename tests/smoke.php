@@ -71,6 +71,7 @@ try {
     require_once $projectRoot . '/www/app_config.php';
     $defaults = appConfig($db);
     assertSameValue('Helferliste', $defaults['app_name'] ?? null, 'Standardkonfiguration ist nicht verfügbar.');
+    assertSameValue('published', $defaults['event_status'] ?? null, 'Bestehende Installationen müssen nach dem Update veröffentlicht bleiben.');
 
     saveAppSetting($db, 'event_organizer', 'Beispielverein');
     assertSameValue('Beispielverein', appSetting($db, 'event_organizer'), 'Einstellung konnte nicht gespeichert und gelesen werden.');

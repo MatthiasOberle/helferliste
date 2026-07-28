@@ -8,6 +8,7 @@ $db = new PDO('sqlite:' . __DIR__ . '/../data/helferliste.sqlite');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 require_once __DIR__ . '/app_config.php';
+require_once __DIR__ . '/shift_helpers.php';
 require_once __DIR__ . '/tracking.php';
 $appConfig = appConfig($db);
 
@@ -68,7 +69,7 @@ function getEntryShiftTitles(PDO $db, int $entryId, string $linkTable, string $s
 }
 
 function getEntryShiftBadges(PDO $db, int $entryId, string $linkTable, string $shiftTable, string $column, string $prefix): array {
-    $stmt = $db->prepare("SELECT s.title, (
+    $stmt = $db->prepare("SELECT s.*, (
             SELECT COUNT(*)
             FROM {$shiftTable} s2
             WHERE s2.sort_order < s.sort_order
@@ -83,7 +84,7 @@ function getEntryShiftBadges(PDO $db, int $entryId, string $linkTable, string $s
 
     return array_map(fn($row) => [
         'label' => $prefix . (int)$row['shift_number'],
-        'title' => (string)$row['title'],
+        'title' => shiftDisplayLabel($row),
     ], $rows);
 }
 
@@ -420,6 +421,7 @@ $openRequests = (int)$db->query("SELECT COUNT(*) FROM change_requests WHERE stat
                 <div class="shift <?= h(fillClass($used, $max)) ?>">
                     <div class="shift-top">
                         <strong><?= h((string)$shift['title']) ?></strong>
+                        <?php if (shiftScheduleText($shift) !== ''): ?><span class="muted"><?= h(shiftScheduleText($shift)) ?></span><?php endif; ?>
                         <span class="shift-count"><?= $used ?> von <?= $max ?></span>
                     </div>
                     <div class="load-bar" title="<?= $used ?> von <?= $max ?> Plätzen belegt">
@@ -442,6 +444,7 @@ $openRequests = (int)$db->query("SELECT COUNT(*) FROM change_requests WHERE stat
                 <div class="shift <?= h(fillClass($used, $max)) ?>">
                     <div class="shift-top">
                         <strong><?= h((string)$shift['title']) ?></strong>
+                        <?php if (shiftScheduleText($shift) !== ''): ?><span class="muted"><?= h(shiftScheduleText($shift)) ?></span><?php endif; ?>
                         <span class="shift-count"><?= $used ?> von <?= $max ?></span>
                     </div>
                     <div class="load-bar" title="<?= $used ?> von <?= $max ?> Springer-Plätzen belegt">

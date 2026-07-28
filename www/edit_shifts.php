@@ -1,532 +1,267 @@
 <?php
 
+declare(strict_types=1);
+
 require __DIR__ . '/auth.php';
 
 $db = new PDO('sqlite:' . __DIR__ . '/../data/helferliste.sqlite');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$db->exec('PRAGMA foreign_keys = ON');
 
 require_once __DIR__ . '/app_config.php';
+require_once __DIR__ . '/shift_helpers.php';
+require_once __DIR__ . '/tracking.php';
 $appConfig = appConfig($db);
 
-function h(string $value): string {
+function h(string $value): string
+{
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 }
 
-function limitText(string $value, int $maxLength): string {
+function limitText(string $value, int $maxLength): string
+{
     $value = trim($value);
-    if (function_exists('mb_substr')) {
-        return mb_substr($value, 0, $maxLength);
+    return function_exists('mb_substr') ? mb_substr($value, 0, $maxLength) : substr($value, 0, $maxLength);
+}
+
+function shiftTableForType(string $type): string
+{
+    return match ($type) {
+        'normal' => 'shifts',
+        'springer' => 'springer_shifts',
+        default => throw new InvalidArgumentException('Ungültige Schichtart.'),
+    };
+}
+
+function shiftLinkInfo(string $type): array
+{
+    return $type === 'normal'
+        ? ['entry_shifts', 'shift_id']
+        : ['entry_springer_shifts', 'springer_shift_id'];
+}
+
+function postedShiftValues(): array
+{
+    $title = limitText((string)($_POST['title'] ?? ''), 160);
+    $date = normalizeOptionalDate((string)($_POST['shift_date'] ?? ''));
+    $start = normalizeOptionalTime((string)($_POST['start_time'] ?? ''));
+    $end = normalizeOptionalTime((string)($_POST['end_time'] ?? ''));
+    validateTimeRange($start, $end);
+    $location = limitText((string)($_POST['location'] ?? ''), 160);
+    $note = limitText((string)($_POST['note'] ?? ''), 600);
+    $maxSlots = (int)($_POST['max_slots'] ?? 0);
+    $sortOrder = (int)($_POST['sort_order'] ?? 0);
+
+    if ($title === '') {
+        throw new InvalidArgumentException('Der Titel darf nicht leer sein.');
     }
-    return substr($value, 0, $maxLength);
+    if ($maxSlots < 1 || $maxSlots > 9999) {
+        throw new InvalidArgumentException('Die Kapazität muss zwischen 1 und 9999 liegen.');
+    }
+
+    return [
+        'title' => $title,
+        'shift_date' => $date,
+        'start_time' => $start,
+        'end_time' => $end,
+        'location' => $location,
+        'note' => $note,
+        'max_slots' => $maxSlots,
+        'sort_order' => $sortOrder,
+    ];
 }
 
 $message = '';
 $error = '';
 
-// Alle Änderungen an Schichten laufen über diese POST-Verarbeitung.
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? 'update';
-    $type = $_POST['type'] ?? '';
+    $action = (string)($_POST['action'] ?? '');
+    $type = (string)($_POST['type'] ?? '');
     $id = (int)($_POST['id'] ?? 0);
-    $title = limitText((string)($_POST['title'] ?? ''), 160);
-    $maxSlots = (int)($_POST['max_slots'] ?? 0);
-    $sortOrder = (int)($_POST['sort_order'] ?? 0);
 
-    if (!in_array($type, ['normal', 'springer'], true)) {
-        $error = 'Ungültiger Schichttyp.';
-    } else {
-        try {
-                        // Bestehende Schicht aktualisieren: Titel, maximale Plätze und Reihenfolge.
-if ($action === 'update') {
-                if ($id <= 0) {
-                    throw new RuntimeException('Ungültige Schicht.');
+    try {
+        $table = shiftTableForType($type);
+
+        if ($action === 'create' || $action === 'update') {
+            $values = postedShiftValues();
+            if ($action === 'create') {
+                $values['sort_order'] = (int)$db->query("SELECT COALESCE(MAX(sort_order), 0) + 1 FROM {$table}")->fetchColumn();
+                $stmt = $db->prepare("INSERT INTO {$table}
+                    (title, shift_date, start_time, end_time, location, note, max_slots, sort_order, active)
+                    VALUES (:title, :shift_date, :start_time, :end_time, :location, :note, :max_slots, :sort_order, 1)");
+                $stmt->execute($values);
+                logEvent($db, 'shift_created', 'Neue Schicht angelegt: ' . $values['title']);
+                $message = 'Neue Schicht wurde angelegt.';
+            } else {
+                if ($id <= 0 || $values['sort_order'] < 1) {
+                    throw new InvalidArgumentException('Schicht und Reihenfolge müssen gültig sein.');
                 }
-
-                if ($title === '') {
-                    throw new RuntimeException('Der Titel darf nicht leer sein.');
-                }
-
-                if ($maxSlots <= 0) {
-                    throw new RuntimeException('Die maximale Anzahl muss mindestens 1 sein.');
-                }
-
-                if ($sortOrder <= 0) {
-                    throw new RuntimeException('Die Reihenfolge muss mindestens 1 sein.');
-                }
-
-                if ($type === 'normal') {
-                    $stmt = $db->prepare("
-                        UPDATE shifts
-                        SET title = :title,
-                            max_slots = :max_slots,
-                            sort_order = :sort_order
-                        WHERE id = :id
-                    ");
-                } else {
-                    $stmt = $db->prepare("
-                        UPDATE springer_shifts
-                        SET title = :title,
-                            max_slots = :max_slots,
-                            sort_order = :sort_order
-                        WHERE id = :id
-                    ");
-                }
-
-                $stmt->execute([
-                    ':title' => $title,
-                    ':max_slots' => $maxSlots,
-                    ':sort_order' => $sortOrder,
-                    ':id' => $id,
-                ]);
-
+                $values['id'] = $id;
+                $stmt = $db->prepare("UPDATE {$table} SET
+                    title = :title, shift_date = :shift_date, start_time = :start_time,
+                    end_time = :end_time, location = :location, note = :note,
+                    max_slots = :max_slots, sort_order = :sort_order WHERE id = :id");
+                $stmt->execute($values);
+                logEvent($db, 'shift_updated', 'Schicht #' . $id . ' wurde aktualisiert.');
                 $message = 'Schicht wurde gespeichert.';
             }
-
-                        // Neue Schichten werden automatisch ans Ende der aktuellen Sortierung gehängt.
-if ($action === 'create') {
-                if ($title === '') {
-                    throw new RuntimeException('Der Titel darf nicht leer sein.');
-                }
-
-                if ($maxSlots <= 0) {
-                    throw new RuntimeException('Die maximale Anzahl muss mindestens 1 sein.');
-                }
-
-                if ($type === 'normal') {
-                    $newSortOrder = (int)$db->query("SELECT COALESCE(MAX(sort_order), 0) + 1 FROM shifts")->fetchColumn();
-
-                    $stmt = $db->prepare("
-                        INSERT INTO shifts (title, max_slots, sort_order, active)
-                        VALUES (:title, :max_slots, :sort_order, 1)
-                    ");
-                } else {
-                    $newSortOrder = (int)$db->query("SELECT COALESCE(MAX(sort_order), 0) + 1 FROM springer_shifts")->fetchColumn();
-
-                    $stmt = $db->prepare("
-                        INSERT INTO springer_shifts (title, max_slots, sort_order, active)
-                        VALUES (:title, :max_slots, :sort_order, 1)
-                    ");
-                }
-
-                $stmt->execute([
-                    ':title' => $title,
-                    ':max_slots' => $maxSlots,
-                    ':sort_order' => $newSortOrder,
-                ]);
-
-                $message = 'Neue Schicht wurde angelegt.';
+        } elseif ($action === 'duplicate') {
+            if ($id <= 0) {
+                throw new InvalidArgumentException('Ungültige Schicht.');
             }
-
-                        // Schichten werden deaktiviert statt hart gelöscht, damit alte Einträge lesbar bleiben.
-if ($action === 'deactivate') {
-                if ($id <= 0) {
-                    throw new RuntimeException('Ungültige Schicht.');
-                }
-
-                if ($type === 'normal') {
-                    $stmt = $db->prepare("UPDATE shifts SET active = 0 WHERE id = :id");
-                } else {
-                    $stmt = $db->prepare("UPDATE springer_shifts SET active = 0 WHERE id = :id");
-                }
-
-                $stmt->execute([':id' => $id]);
-
-                $message = 'Schicht wurde deaktiviert.';
+            $stmt = $db->prepare("SELECT * FROM {$table} WHERE id = ?");
+            $stmt->execute([$id]);
+            $source = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$source) {
+                throw new RuntimeException('Die Schicht wurde nicht gefunden.');
             }
-
-        } catch (Throwable $e) {
-            $error = $e->getMessage();
+            $sortOrder = (int)$db->query("SELECT COALESCE(MAX(sort_order), 0) + 1 FROM {$table}")->fetchColumn();
+            $insert = $db->prepare("INSERT INTO {$table}
+                (title, shift_date, start_time, end_time, location, note, max_slots, sort_order, active)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)");
+            $insert->execute([
+                limitText('Kopie von ' . (string)$source['title'], 160),
+                $source['shift_date'], $source['start_time'], $source['end_time'],
+                $source['location'], $source['note'], (int)$source['max_slots'], $sortOrder,
+            ]);
+            logEvent($db, 'shift_duplicated', 'Schicht #' . $id . ' wurde dupliziert.');
+            $message = 'Schicht wurde dupliziert und ans Ende gesetzt.';
+        } elseif ($action === 'deactivate') {
+            if ($id <= 0) {
+                throw new InvalidArgumentException('Ungültige Schicht.');
+            }
+            $stmt = $db->prepare("UPDATE {$table} SET active = 0 WHERE id = ?");
+            $stmt->execute([$id]);
+            logEvent($db, 'shift_deactivated', 'Schicht #' . $id . ' wurde deaktiviert.');
+            $message = 'Schicht wurde deaktiviert.';
         }
+    } catch (Throwable $exception) {
+        $error = $exception->getMessage();
     }
 }
 
-$normalShifts = $db->query("
-    SELECT
-        s.id,
-        s.title,
-        s.max_slots,
-        s.sort_order,
-        COUNT(es.entry_id) AS used_slots
-    FROM shifts s
-    LEFT JOIN entry_shifts es ON es.shift_id = s.id
-    WHERE s.active = 1
-    GROUP BY s.id
-    ORDER BY s.sort_order ASC, s.id ASC
-")->fetchAll(PDO::FETCH_ASSOC);
-
-$springerShifts = $db->query("
-    SELECT
-        s.id,
-        s.title,
-        s.max_slots,
-        s.sort_order,
-        COUNT(es.entry_id) AS used_slots
-    FROM springer_shifts s
-    LEFT JOIN entry_springer_shifts es ON es.springer_shift_id = s.id
-    WHERE s.active = 1
-    GROUP BY s.id
-    ORDER BY s.sort_order ASC, s.id ASC
-")->fetchAll(PDO::FETCH_ASSOC);
-
-// Rendert die Formularzeilen für normale und Springer-Schichten.
-function renderShiftEditor(array $shifts, string $type, string $slotsLabel): void {
-    foreach ($shifts as $shift) {
-        ?>
-        <div class="shift-row">
-            <form method="post" class="edit-form">
-                <?= csrfField() ?>
-                <input type="hidden" name="action" value="update">
-                <input type="hidden" name="type" value="<?= h($type) ?>">
-                <input type="hidden" name="id" value="<?= (int)$shift['id'] ?>">
-
-                <div class="field title-field">
-                    <label>Titel</label>
-                    <input type="text" name="title" maxlength="160" value="<?= h($shift['title']) ?>" required>
-                </div>
-
-                <div class="field used-field">
-                    <label>Belegt</label>
-                    <div class="used-box">
-                        <?= (int)$shift['used_slots'] ?> von <?= (int)$shift['max_slots'] ?>
-                    </div>
-                </div>
-
-                <div class="field slots-field">
-                    <label><?= h($slotsLabel) ?></label>
-                    <input type="number" name="max_slots" min="1" value="<?= (int)$shift['max_slots'] ?>" required>
-                </div>
-
-                <div class="field order-field">
-                    <label>Reihenfolge</label>
-                    <input type="number" name="sort_order" min="1" value="<?= (int)$shift['sort_order'] ?>" required>
-                </div>
-
-                <div class="field action-field">
-                    <label>&nbsp;</label>
-                    <button type="submit">Speichern</button>
-                </div>
-            </form>
-
-            <form method="post" class="delete-form" onsubmit="return confirm('Diese Schicht wirklich deaktivieren? Sie verschwindet dann aus der öffentlichen Auswahl. Bestehende Einträge bleiben erhalten.');">
-                <?= csrfField() ?>
-                <input type="hidden" name="action" value="deactivate">
-                <input type="hidden" name="type" value="<?= h($type) ?>">
-                <input type="hidden" name="id" value="<?= (int)$shift['id'] ?>">
-                <button type="submit" class="delete-button">Deaktivieren</button>
-            </form>
-        </div>
-        <?php
-    }
+function loadEditableShifts(PDO $db, string $type): array
+{
+    $table = shiftTableForType($type);
+    [$linkTable, $linkColumn] = shiftLinkInfo($type);
+    $sql = "SELECT s.*, COUNT(es.entry_id) AS used_slots
+        FROM {$table} s
+        LEFT JOIN {$linkTable} es ON es.{$linkColumn} = s.id
+        WHERE s.active = 1
+        GROUP BY s.id
+        ORDER BY s.sort_order, s.id";
+    return $db->query($sql)->fetchAll(PDO::FETCH_ASSOC) ?: [];
 }
 
-?>
-<!doctype html>
+function renderShiftFields(array $shift, bool $includeOrder): void
+{
+    ?>
+    <div class="field wide"><label>Titel</label><input type="text" name="title" maxlength="160" value="<?= h((string)($shift['title'] ?? '')) ?>" required></div>
+    <div class="field"><label>Datum</label><input type="date" name="shift_date" value="<?= h((string)($shift['shift_date'] ?? '')) ?>"></div>
+    <div class="field"><label>Beginn</label><input type="time" name="start_time" value="<?= h((string)($shift['start_time'] ?? '')) ?>"></div>
+    <div class="field"><label>Ende</label><input type="time" name="end_time" value="<?= h((string)($shift['end_time'] ?? '')) ?>"></div>
+    <div class="field"><label>Ort</label><input type="text" name="location" maxlength="160" value="<?= h((string)($shift['location'] ?? '')) ?>"></div>
+    <div class="field"><label>Kapazität</label><input type="number" name="max_slots" min="1" max="9999" value="<?= (int)($shift['max_slots'] ?? 5) ?>" required></div>
+    <?php if ($includeOrder): ?><div class="field"><label>Reihenfolge</label><input type="number" name="sort_order" min="1" value="<?= (int)($shift['sort_order'] ?? 1) ?>" required></div><?php endif; ?>
+    <div class="field note"><label>Hinweis (öffentlich sichtbar)</label><textarea name="note" maxlength="600" rows="2"><?= h((string)($shift['note'] ?? '')) ?></textarea></div>
+    <?php
+}
+
+function renderShiftSection(array $shifts, string $type, string $heading, int $defaultCapacity): void
+{
+    ?>
+    <section class="card">
+        <h2><?= h($heading) ?></h2>
+        <p class="muted">Titel, Datum, Uhrzeit, Ort, Kapazität und Hinweis können unabhängig gepflegt werden.</p>
+        <form method="post" class="shift-form create-form">
+            <?= csrfField() ?>
+            <input type="hidden" name="action" value="create">
+            <input type="hidden" name="type" value="<?= h($type) ?>">
+            <?php renderShiftFields(['max_slots' => $defaultCapacity], false); ?>
+            <div class="form-actions"><button type="submit">Neue Schicht anlegen</button></div>
+        </form>
+
+        <?php if ($shifts === []): ?>
+            <p class="muted">Keine aktiven Schichten dieser Art vorhanden.</p>
+        <?php endif; ?>
+
+        <?php foreach ($shifts as $shift): ?>
+            <article class="shift-item">
+                <form method="post" class="shift-form">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="action" value="update">
+                    <input type="hidden" name="type" value="<?= h($type) ?>">
+                    <input type="hidden" name="id" value="<?= (int)$shift['id'] ?>">
+                    <?php renderShiftFields($shift, true); ?>
+                    <div class="used"><strong><?= (int)$shift['used_slots'] ?> von <?= (int)$shift['max_slots'] ?></strong> Plätzen belegt</div>
+                    <div class="form-actions"><button type="submit">Speichern</button></div>
+                </form>
+                <div class="secondary-actions">
+                    <form method="post">
+                        <?= csrfField() ?><input type="hidden" name="action" value="duplicate"><input type="hidden" name="type" value="<?= h($type) ?>"><input type="hidden" name="id" value="<?= (int)$shift['id'] ?>">
+                        <button class="secondary" type="submit">Duplizieren</button>
+                    </form>
+                    <form method="post" onsubmit="return confirm('Diese Schicht deaktivieren? Bestehende Zuordnungen bleiben erhalten.');">
+                        <?= csrfField() ?><input type="hidden" name="action" value="deactivate"><input type="hidden" name="type" value="<?= h($type) ?>"><input type="hidden" name="id" value="<?= (int)$shift['id'] ?>">
+                        <button class="danger" type="submit">Deaktivieren</button>
+                    </form>
+                </div>
+            </article>
+        <?php endforeach; ?>
+    </section>
+    <?php
+}
+
+$normalShifts = loadEditableShifts($db, 'normal');
+$flexibleShifts = loadEditableShifts($db, 'springer');
+
+?><!doctype html>
 <html lang="de">
 <head>
     <meta charset="utf-8">
-    <title>Schichten bearbeiten - <?= h(appTitle($appConfig)) ?></title>
     <meta name="viewport" content="<?= h(adminViewportContent()) ?>">
-
+    <title>Schichten bearbeiten - <?= h(appTitle($appConfig)) ?></title>
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: #f2f4f7;
-            color: #1f2937;
-        }
-
-        .container {
-            width: min(1680px, calc(100% - 28px));
-            margin: 0 auto;
-            padding: 16px 0 40px;
-        }
-
-        .card {
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-        }
-
-        h1,
-        h2 {
-            margin-top: 0;
-        }
-
-        h2 {
-            margin-bottom: 18px;
-        }
-
-        .button,
-        button {
-            display: inline-block;
-            padding: 11px 16px;
-            background: #b91c1c;
-            color: white;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: 700;
-            border: 0;
-            cursor: pointer;
-            font-size: 14px;
-            line-height: 1.2;
-        }
-
-        .button.secondary {
-            background: #374151;
-        }
-
-        .admin-nav {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            align-items: center;
-            margin-top: 12px;
-        }
-
-        .admin-nav a {
-            display: inline-block;
-            border-radius: 999px;
-            padding: 9px 12px;
-            background: #e5e7eb;
-            color: #1f2937;
-            font-weight: 700;
-            text-decoration: none;
-            line-height: 1.2;
-        }
-
-        .admin-nav a.active {
-            background: #b91c1c;
-            color: white;
-        }
-
-        .admin-nav a.right {
-            margin-left: auto;
-        }
-
-        .delete-button {
-            background: #6b7280;
-            width: 100%;
-        }
-
-        .delete-button:hover {
-            background: #4b5563;
-        }
-
-        .success {
-            padding: 12px;
-            border-radius: 10px;
-            background: #dcfce7;
-            color: #166534;
-            font-weight: 700;
-            margin-top: 16px;
-        }
-
-        .error {
-            padding: 12px;
-            border-radius: 10px;
-            background: #fee2e2;
-            color: #991b1b;
-            font-weight: 700;
-            margin-top: 16px;
-        }
-
-        .create-form {
-            display: grid;
-            grid-template-columns: minmax(260px, 1fr) 150px 230px;
-            gap: 14px;
-            align-items: end;
-            padding: 0 0 20px 0;
-            margin-bottom: 14px;
-            border-bottom: 2px solid #e5e7eb;
-        }
-
-        .shift-row {
-            display: grid;
-            grid-template-columns: 1fr 140px;
-            gap: 12px;
-            align-items: end;
-            padding: 14px 0;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .shift-row:last-child {
-            border-bottom: 0;
-        }
-
-        .edit-form {
-            display: grid;
-            grid-template-columns: minmax(260px, 1fr) 130px 130px 120px 130px;
-            gap: 14px;
-            align-items: end;
-        }
-
-        .delete-form {
-            align-self: end;
-        }
-
-        .field label {
-            display: block;
-            font-size: 13px;
-            font-weight: 700;
-            color: #4b5563;
-            margin-bottom: 6px;
-        }
-
-        input[type="text"],
-        input[type="number"] {
-            width: 100%;
-            padding: 11px 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 10px;
-            font-size: 15px;
-            background: white;
-        }
-
-        .used-box {
-            min-height: 42px;
-            display: flex;
-            align-items: center;
-            padding: 11px 12px;
-            border-radius: 10px;
-            background: #f9fafb;
-            color: #374151;
-            font-size: 14px;
-            white-space: nowrap;
-        }
-
-        .action-field button {
-            width: 100%;
-        }
-
-        @media (max-width: 1050px) {
-            .shift-row {
-                grid-template-columns: 1fr;
-                gap: 10px;
-                padding: 16px;
-                margin-bottom: 14px;
-                border: 1px solid #e5e7eb;
-                border-radius: 14px;
-                background: #ffffff;
-            }
-
-            .edit-form {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-
-            .create-form {
-                grid-template-columns: 1fr;
-                padding: 16px;
-                border: 1px solid #e5e7eb;
-                border-radius: 14px;
-                background: #f9fafb;
-            }
-
-            .field label {
-                margin-top: 0;
-            }
-
-            .used-box {
-                white-space: normal;
-            }
-
-            .action-field label {
-                display: none;
-            }
-
-            .action-field button,
-            .delete-button {
-                width: 100%;
-                margin-top: 4px;
-            }
-        }
+        :root { --primary:<?= h(appDesignColor($appConfig, 'primary_color')) ?>; --border:#d8dee8; --bg:#f2f4f7; --bad:#8b0000; }
+        * { box-sizing:border-box; }
+        body { margin:0; font-family:system-ui,sans-serif; background:var(--bg); color:#1f2937; }
+        .container { width:min(1680px,calc(100% - 28px)); margin:0 auto; padding:16px 0 40px; }
+        .card { background:#fff; border:1px solid var(--border); border-radius:16px; padding:20px; margin-bottom:20px; box-shadow:0 6px 22px rgba(15,23,42,.07); }
+        h1,h2 { margin-top:0; }
+        .muted { color:#64748b; }
+        .notice { padding:12px; border-radius:10px; margin:12px 0; font-weight:700; }
+        .success { background:#dcfce7; color:#166534; }
+        .error { background:#fee2e2; color:#991b1b; }
+        .shift-item { border:1px solid var(--border); border-radius:14px; padding:15px; margin-top:14px; background:#fafbfc; }
+        .shift-form { display:grid; grid-template-columns:repeat(6,minmax(120px,1fr)); gap:12px; align-items:end; }
+        .create-form { border:1px dashed #9aa6b5; border-radius:14px; padding:15px; margin:14px 0 20px; background:#f8fafc; }
+        .field.wide { grid-column:span 2; }
+        .field.note { grid-column:span 3; }
+        .field label { display:block; font-size:.82rem; font-weight:800; color:#475569; margin-bottom:5px; }
+        input,textarea { width:100%; border:1px solid #b8c1cd; border-radius:9px; padding:10px; font:inherit; background:#fff; }
+        textarea { resize:vertical; }
+        button,.button { display:inline-block; border:0; border-radius:9px; padding:11px 14px; background:var(--primary); color:#fff; font-weight:750; text-decoration:none; cursor:pointer; }
+        button.secondary { background:#475569; }
+        button.danger { background:var(--bad); }
+        .used { align-self:center; color:#475569; }
+        .form-actions { align-self:end; }
+        .form-actions button { width:100%; }
+        .secondary-actions { display:flex; flex-wrap:wrap; gap:9px; justify-content:flex-end; margin-top:10px; }
+        @media(max-width:1150px) { .shift-form { grid-template-columns:repeat(2,minmax(0,1fr)); } .field.wide,.field.note { grid-column:span 2; } }
+        @media(max-width:680px) { .shift-form { grid-template-columns:1fr; } .field.wide,.field.note { grid-column:span 1; } .secondary-actions { display:grid; } .secondary-actions button { width:100%; } }
     </style>
 </head>
 <body class="<?= h(adminBodyClass()) ?>">
-
-<div class="container">
+<main class="container">
     <div class="card">
         <h1>Schichten bearbeiten</h1>
-
+        <p class="muted"><?= h(appEventDateRange($appConfig)) ?> · Status: <?= h(appEventStatusLabel($appConfig)) ?></p>
         <?php adminNav('shifts'); ?>
-
-        <?php if ($message !== ''): ?>
-            <div class="success"><?= h($message) ?></div>
-        <?php endif; ?>
-
-        <?php if ($error !== ''): ?>
-            <div class="error"><?= h($error) ?></div>
-        <?php endif; ?>
+        <?php if ($message !== ''): ?><div class="notice success"><?= h($message) ?></div><?php endif; ?>
+        <?php if ($error !== ''): ?><div class="notice error"><?= h($error) ?></div><?php endif; ?>
     </div>
-
-    <div class="card">
-        <h2>Normale Schichten</h2>
-
-        <form method="post" class="create-form">
-                <?= csrfField() ?>
-            <input type="hidden" name="action" value="create">
-            <input type="hidden" name="type" value="normal">
-
-            <div class="field">
-                <label>Neue normale Schicht</label>
-                <input type="text" name="title" maxlength="160" placeholder="z. B. Samstag 12:00 – 15:00 Uhr">
-            </div>
-
-            <div class="field">
-                <label>Max. Plätze</label>
-                <input type="number" name="max_slots" min="1" value="10">
-            </div>
-
-            <div class="field">
-                <label>&nbsp;</label>
-                <button type="submit">Neue Schicht anlegen</button>
-            </div>
-        </form>
-
-        <?php if (empty($normalShifts)): ?>
-            <p>Keine aktiven normalen Schichten vorhanden.</p>
-        <?php else: ?>
-            <?php renderShiftEditor($normalShifts, 'normal', 'Max. Plätze'); ?>
-        <?php endif; ?>
-    </div>
-
-    <div class="card">
-        <h2>Springer-Schichten</h2>
-
-        <form method="post" class="create-form">
-                <?= csrfField() ?>
-            <input type="hidden" name="action" value="create">
-            <input type="hidden" name="type" value="springer">
-
-            <div class="field">
-                <label>Neue Springer-Schicht</label>
-                <input type="text" name="title" maxlength="160" placeholder="z. B. Samstag 12:00 – 15:00 Uhr">
-            </div>
-
-            <div class="field">
-                <label>Max. Springer</label>
-                <input type="number" name="max_slots" min="1" value="5">
-            </div>
-
-            <div class="field">
-                <label>&nbsp;</label>
-                <button type="submit">Neue Springer-Schicht anlegen</button>
-            </div>
-        </form>
-
-        <?php if (empty($springerShifts)): ?>
-            <p>Keine aktiven Springer-Schichten vorhanden.</p>
-        <?php else: ?>
-            <?php renderShiftEditor($springerShifts, 'springer', 'Max. Springer'); ?>
-        <?php endif; ?>
-    </div>
-</div>
-
+    <?php renderShiftSection($normalShifts, 'normal', appText($appConfig, 'text_normal_shifts_heading'), 10); ?>
+    <?php renderShiftSection($flexibleShifts, 'springer', appText($appConfig, 'text_flexible_shifts_heading'), 5); ?>
+</main>
 </body>
 </html>
