@@ -6,7 +6,7 @@ Die technische Herstellerangabe verweist auf **[MOWST — Digitale Werkstatt](ht
 
 ## 1. Zugang absichern
 
-Unter `System → Passwort ändern` das bekannte Standardpasswort sofort durch ein langes, nur hier verwendetes Passwort ersetzen.
+Beim ersten Aufruf von `admin.php` den einmaligen Einrichtungscode aus dem Installer verwenden und ein nur hier verwendetes Admin-Passwort mit mindestens 12 Zeichen festlegen. Der Code wird nach erfolgreicher Einrichtung ungültig. Den Adminbereich anschließend nur berechtigten Personen zugänglich machen.
 
 ## 2. Allgemeine Angaben
 

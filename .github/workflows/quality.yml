@@ -40,3 +40,6 @@ jobs:
 
       - name: Aktualisierung und Datenerhalt prüfen
         run: php tests/migration.php
+
+      - name: Sichere Admin-Ersteinrichtung prüfen
+        run: bash tests/http_admin_setup.sh

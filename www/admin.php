@@ -170,11 +170,12 @@ if ($action === 'change_admin_password') {
         $newPassword = (string)($_POST['new_password'] ?? '');
         $repeatPassword = (string)($_POST['repeat_password'] ?? '');
 
-        if (!password_verify($currentPassword, getAdminPasswordHash())) {
+        $currentPasswordHash = getAdminPasswordHash();
+        if ($currentPasswordHash === null || !password_verify($currentPassword, $currentPasswordHash)) {
             $error = 'Das aktuelle Passwort stimmt nicht.';
             $showPasswordForm = true;
-        } elseif (strlen($newPassword) < 6) {
-            $error = 'Das neue Passwort muss mindestens 6 Zeichen lang sein.';
+        } elseif (strlen($newPassword) < 12) {
+            $error = 'Das neue Passwort muss mindestens 12 Zeichen lang sein.';
             $showPasswordForm = true;
         } elseif ($newPassword !== $repeatPassword) {
             $error = 'Die Wiederholung stimmt nicht mit dem neuen Passwort überein.';
@@ -182,6 +183,7 @@ if ($action === 'change_admin_password') {
         } else {
             try {
                 setAdminPassword($newPassword);
+                $_SESSION['admin_auth_generation'] = getAdminAuthGeneration();
                 logEvent($db, 'admin_password_changed', 'Admin-Passwort wurde geändert.');
                 $message = 'Admin-Passwort wurde geändert.';
                 $showPasswordForm = false;
@@ -367,23 +369,19 @@ $openRequests = (int)$db->query("SELECT COUNT(*) FROM change_requests WHERE stat
     <?php if ($error !== ''): ?><div class="notice error"><?= h($error) ?></div><?php endif; ?>
 
 
-    <?php if (adminPasswordIsDefault()): ?>
-        <div class="notice error">Aktuell ist noch das Standardpasswort aktiv. Bitte im Adminbereich ändern, damit nicht jeder mit dem Konami-Code durch die Tür spaziert.</div>
-    <?php endif; ?>
-
     <?php if ($showPasswordForm): ?>
         <div class="card">
             <h2>Admin-Passwort ändern</h2>
-            <p class="muted">Das Passwort darf frei gewählt werden und muss mindestens 6 Zeichen lang sein.</p>
+            <p class="muted">Das Passwort darf frei gewählt werden und muss mindestens 12 Zeichen lang sein.</p>
             <form method="post">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="change_admin_password">
                 <label>Aktuelles Passwort</label>
                 <input type="password" name="current_password" required>
                 <label>Neues Passwort</label>
-                <input type="password" name="new_password" minlength="6" required>
+                <input type="password" name="new_password" minlength="12" autocomplete="new-password" required>
                 <label>Neues Passwort wiederholen</label>
-                <input type="password" name="repeat_password" minlength="6" required>
+                <input type="password" name="repeat_password" minlength="12" autocomplete="new-password" required>
                 <button type="submit">Passwort speichern</button>
             </form>
         </div>

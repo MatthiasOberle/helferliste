@@ -11,7 +11,9 @@ REM   Install\install_helferliste_windows.bat
 REM   Install\database_schema.sql
 REM   Install\migrate.php
 REM   Install\migration_lib.php
+REM   Install\reset_admin.php
 REM   Install\migrations\001_baseline.sql
+REM   Install\migrations\002_secure_admin_setup.sql
 REM
 REM Das Script kopiert die Webdateien, erstellt die SQLite-
 REM Datenbank und setzt einfache Rechte. PHP wird nicht
@@ -124,8 +126,8 @@ echo 3. Bindung: deine Domain oder IP eintragen.
 echo 4. PHP/FastCGI pruefen. Falls web.config einen anderen PHP-Pfad braucht,
 echo    bitte public\web.config anpassen.
 echo 5. Admin oeffnen: http://DEINE-DOMAIN/admin.php
-echo 6. Login: admin / GetYourOwnWebsite
-echo 7. Direkt das Passwort aendern.
+echo 6. Den oben ausgegebenen einmaligen Einrichtungscode verwenden.
+echo 7. Ein eigenes Admin-Passwort mit mindestens 12 Zeichen festlegen.
 echo.
 echo Hinweis fuer XAMPP:
 echo Du kannst als Installationsordner auch C:\xampp\htdocs\helferliste nehmen.

@@ -11,6 +11,8 @@ Alle wichtigen Änderungen dieses Projekts werden hier dokumentiert.
 - Mindestversion auf PHP 8.3 angehoben
 - automatische Prüfmatrix auf PHP 8.3, 8.4 und 8.5 aktualisiert
 - Linux- und Windows-Installer auf den gemeinsamen Migrationsmechanismus umgestellt
+- allgemein bekanntes Standardpasswort durch einmaligen, zufälligen Einrichtungscode ersetzt
+- Mindestlänge für neue Admin-Passwörter auf 12 Zeichen angehoben
 
 ### Ergänzt
 
@@ -18,6 +20,8 @@ Alle wichtigen Änderungen dieses Projekts werden hier dokumentiert.
 - Anwendungsversion `1.1.0-dev` und fortlaufende Datenbank-Schema-Version eingeführt
 - konsistente SQLite-Sicherung vor notwendigen Migrationen ergänzt
 - Aktualisierungstest mit Erhalt vorhandener Zugangscodes, Rückmeldungen und Einstellungen ergänzt
+- sicheren serverseitigen Admin-Reset mit Vorab-Sicherung und neuem Einrichtungscode ergänzt
+- Integrationstest für Ersteinrichtung, Anmeldung, Reset und Entzug bestehender Sitzungen ergänzt
 
 ## 1.0.1 – 2026-07-27
 

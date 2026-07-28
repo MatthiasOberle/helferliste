@@ -111,4 +111,4 @@ INSERT INTO event_log (created_at, action, detail)
 SELECT datetime('now'), 'installed', 'Helferliste wurde eingerichtet.'
 WHERE NOT EXISTS (SELECT 1 FROM event_log WHERE action = 'installed');
 
-PRAGMA user_version = 1;
+PRAGMA user_version = 2;

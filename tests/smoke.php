@@ -27,6 +27,9 @@ try {
     $migration = helferlisteMigrateDatabase($databaseFile);
     assertSameValue(true, $migration['changed'], 'Neuinstallation wurde nicht als Migration erkannt.');
     assertSameValue(HELFERLISTE_SCHEMA_VERSION, $migration['to_version'], 'Neuinstallation hat nicht die aktuelle Schema-Version erreicht.');
+    if (!is_string($migration['setup_token']) || $migration['setup_token'] === '') {
+        fail('Neuinstallation hat keinen einmaligen Admin-Einrichtungscode erzeugt.');
+    }
 
     $db = new PDO('sqlite:' . $databaseFile);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -59,6 +62,10 @@ try {
     assertSameValue(1, (int)$db->query("SELECT COUNT(*) FROM event_log WHERE action = 'installed'")->fetchColumn(), 'Installationsprotokoll wurde mehrfach oder nicht angelegt.');
     assertSameValue([], $db->query('PRAGMA foreign_key_check')->fetchAll(PDO::FETCH_ASSOC), 'Fremdschlüsselprüfung ist fehlgeschlagen.');
     assertSameValue(HELFERLISTE_SCHEMA_VERSION, (int)$db->query('PRAGMA user_version')->fetchColumn(), 'Schema-Version ist nicht gesetzt.');
+    $setupTokenHash = (string)$db->query("SELECT setting_value FROM app_settings WHERE setting_key = 'admin_setup_token_hash'")->fetchColumn();
+    $normalizedSetupToken = str_replace('-', '', $migration['setup_token']);
+    assertSameValue(true, password_verify($normalizedSetupToken, $setupTokenHash), 'Einrichtungscode wurde nicht sicher als Hash gespeichert.');
+    assertSameValue(false, str_contains($setupTokenHash, $normalizedSetupToken), 'Einrichtungscode wurde im Klartext gespeichert.');
 
     require_once $projectRoot . '/www/app_config.php';
     $defaults = appConfig($db);

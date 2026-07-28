@@ -50,12 +50,7 @@ https://DEINE-DOMAIN/admin.php
 
 Erster Zugang:
 
-```text
-Benutzername: admin
-Passwort: GetYourOwnWebsite
-```
-
-Das Passwort muss direkt nach dem ersten Login unter `System → Passwort ändern` ersetzt werden.
+Der Installer zeigt einen zufälligen, einmaligen Einrichtungscode. Beim ersten Aufruf von `admin.php` wird dieser Code eingegeben und ein eigenes Admin-Passwort mit mindestens 12 Zeichen festgelegt. Der Code wird nur als Hash gespeichert und nach erfolgreicher Einrichtung gelöscht. Es gibt kein allgemein bekanntes Standardpasswort mehr.
 
 ## Variante B: Linux manuell
 
@@ -65,7 +60,7 @@ Beispiel für Ubuntu/Debian:
 
 ```bash
 sudo apt update
-sudo apt install nginx php-fpm php-sqlite3 sqlite3 rsync
+sudo apt install nginx php-fpm php-cli php-sqlite3 sqlite3 rsync
 ```
 
 Prüfen:
@@ -184,7 +179,7 @@ Danach im IIS-Manager:
 3. PHP/FastCGI prüfen.
 4. Kontrollieren, ob `www/web.config` zum installierten PHP-Pfad passt.
 5. HTTPS-Bindung und Zertifikat einrichten.
-6. `admin.php` öffnen und Standardpasswort ändern.
+6. `admin.php` öffnen, einmaligen Einrichtungscode eingeben und eigenes Passwort festlegen.
 
 Falls Bilder über 8 MB oder bereits kleinere Bilder nicht hochgeladen werden können, in der verwendeten `php.ini` mindestens `upload_max_filesize = 8M` und `post_max_size = 10M` setzen und IIS/PHP-FastCGI neu starten.
 
@@ -204,7 +199,7 @@ Diese Variante ist ohne zusätzliche Härtung nicht als Empfehlung für einen ö
 
 Nach jeder neuen Installation:
 
-1. Standardpasswort ändern.
+1. Einmaligen Einrichtungscode verwenden und eigenes Admin-Passwort festlegen.
 2. `System → Einstellungen` öffnen.
 3. App-Name, Organisation und Veranstaltung eintragen.
 4. öffentliche Basis-URL kontrollieren.
@@ -270,4 +265,12 @@ Unter `System → Einstellungen` die öffentliche Basis-URL einschließlich `htt
 
 ### Admin-Passwort vergessen
 
-Es gibt absichtlich keinen öffentlichen automatischen Passwort-Reset. Eine Wiederherstellung muss durch eine berechtigte Person mit Serverzugriff erfolgen.
+Es gibt absichtlich keinen öffentlichen automatischen Passwort-Reset. Eine berechtigte Person erzeugt direkt auf dem Server einen neuen einmaligen Einrichtungscode:
+
+```bash
+sudo php Install/reset_admin.php \
+  /var/www/helferliste/data/helferliste.sqlite \
+  /var/www/helferliste/data/backups
+```
+
+Vor dem Reset wird automatisch eine konsistente Datenbanksicherung erstellt. Das bisherige Passwort und bestehende Admin-Sitzungen werden ungültig. Anschließend wird unter `admin.php` mit dem neuen Einrichtungscode ein neues Passwort gesetzt.

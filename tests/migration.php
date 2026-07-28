@@ -31,7 +31,10 @@ try {
     }
 
     // Simuliert eine vorhandene 1.0.x-Datenbank ohne formale Schema-Version.
-    $legacySchema = str_replace('PRAGMA user_version = 1;', 'PRAGMA user_version = 0;', $schema);
+    $legacySchema = preg_replace('/PRAGMA user_version = \d+;/', 'PRAGMA user_version = 0;', $schema);
+    if ($legacySchema === null) {
+        migrationFail('Altes Testschema konnte nicht erzeugt werden.');
+    }
     $legacyDb = new PDO('sqlite:' . $databaseFile);
     $legacyDb->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $legacyDb->exec('PRAGMA foreign_keys = ON');
@@ -41,6 +44,9 @@ try {
     $stmt = $legacyDb->prepare("INSERT INTO entries (name, status, created_at, access_code_id) VALUES (?, 'help', datetime('now'), ?)");
     $stmt->execute(['Erika Beispiel', $codeId]);
     $legacyDb->exec("INSERT OR REPLACE INTO app_settings (setting_key, setting_value, updated_at) VALUES ('event_name', 'Testfest', datetime('now'))");
+    $existingPasswordHash = password_hash('Bestehendes-sicheres-Passwort-2026', PASSWORD_DEFAULT);
+    $passwordStmt = $legacyDb->prepare("INSERT OR REPLACE INTO app_settings (setting_key, setting_value, updated_at) VALUES ('admin_password_hash', ?, datetime('now'))");
+    $passwordStmt->execute([$existingPasswordHash]);
 
     require_once $projectRoot . '/www/version.php';
     $outdatedSchemaRejected = false;
@@ -57,6 +63,7 @@ try {
     migrationAssert(0, $firstRun['from_version'], 'Ausgangsversion wurde falsch erkannt.');
     migrationAssert(HELFERLISTE_SCHEMA_VERSION, $firstRun['to_version'], 'Zielversion wurde nicht erreicht.');
     migrationAssert(true, $firstRun['changed'], 'Bestandsdatenbank wurde nicht migriert.');
+    migrationAssert(null, $firstRun['setup_token'], 'Vorhandenes Admin-Passwort wurde durch eine neue Ersteinrichtung ersetzt.');
 
     $backupFile = $firstRun['backup_file'];
     if (!is_string($backupFile) || !is_file($backupFile)) {
@@ -74,7 +81,9 @@ try {
     migrationAssert('Erika Beispiel', (string)$migratedDb->query('SELECT name FROM entries LIMIT 1')->fetchColumn(), 'Vorhandene Rückmeldung ging verloren.');
     migrationAssert('4242', (string)$migratedDb->query('SELECT code FROM access_codes LIMIT 1')->fetchColumn(), 'Vorhandener Zugangscode ging verloren.');
     migrationAssert('Testfest', (string)$migratedDb->query("SELECT setting_value FROM app_settings WHERE setting_key = 'event_name'")->fetchColumn(), 'Vorhandene Einstellung ging verloren.');
-    migrationAssert(1, (int)$migratedDb->query('SELECT COUNT(*) FROM schema_migrations WHERE version = 1')->fetchColumn(), 'Migration wurde nicht protokolliert.');
+    migrationAssert($existingPasswordHash, (string)$migratedDb->query("SELECT setting_value FROM app_settings WHERE setting_key = 'admin_password_hash'")->fetchColumn(), 'Vorhandenes Admin-Passwort wurde verändert.');
+    migrationAssert(1, (int)$migratedDb->query("SELECT COUNT(*) FROM app_settings WHERE setting_key = 'admin_auth_generation' AND setting_value <> ''")->fetchColumn(), 'Vorhandener Adminzugang erhielt keine Sitzungs-Generation.');
+    migrationAssert(HELFERLISTE_SCHEMA_VERSION, (int)$migratedDb->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn(), 'Migrationen wurden nicht vollständig protokolliert.');
     $migratedDb = null;
 
     $secondRun = helferlisteMigrateDatabase($databaseFile, $backupDirectory);

@@ -14,6 +14,7 @@ USE_WWW="N"
 PHP_FPM_SOCKET=""
 PHP_VERSION=""
 BASE_URL=""
+ADMIN_SETUP_TOKEN=""
 
 red='\033[0;31m'; green='\033[0;32m'; yellow='\033[1;33m'; blue='\033[0;34m'; nc='\033[0m'
 info(){ echo -e "${blue}[INFO]${nc} $1"; }
@@ -93,7 +94,10 @@ create_database(){
   info "Erstelle/pruefe und migriere SQLite-Datenbank ..."
   [[ -f "${SCRIPT_DIR}/migrate.php" ]] || fail "migrate.php wurde nicht gefunden. Bitte komplettes Paket hochladen."
   command -v php >/dev/null 2>&1 || fail "PHP-CLI wurde nicht gefunden."
-  php "${SCRIPT_DIR}/migrate.php" "${DB_FILE}" "${DATA_DIR}/backups"
+  local migration_output
+  migration_output="$(php "${SCRIPT_DIR}/migrate.php" "${DB_FILE}" "${DATA_DIR}/backups")"
+  echo "${migration_output}"
+  ADMIN_SETUP_TOKEN="$(printf '%s\n' "${migration_output}" | grep -Eo '([A-F0-9]{4}-){7}[A-F0-9]{4}' | head -n 1 || true)"
   ok "Datenbank bereit: ${DB_FILE}"
 }
 
@@ -190,9 +194,13 @@ print_summary(){
   echo "Datenbank:     ${DB_FILE}"
   echo "Adminseite:    ${BASE_URL}/admin.php"
   echo "Benutzername:  admin"
-  echo "Standardpasswort: GetYourOwnWebsite"
+  if [[ -n "${ADMIN_SETUP_TOKEN}" ]]; then
+    echo "Einrichtungscode: ${ADMIN_SETUP_TOKEN}"
+  else
+    echo "Adminzugang:    Vorhandenes Passwort bleibt gueltig."
+  fi
   echo
-  echo "Wichtig: Bitte direkt nach dem ersten Login das Admin-Passwort aendern."
+  echo "Bei einer Neuinstallation den einmaligen Einrichtungscode verwenden und ein eigenes Passwort mit mindestens 12 Zeichen setzen."
   echo "Danach im Adminbereich Einstellungen, Schichten und Zugangscodes pruefen."
 }
 

@@ -91,9 +91,10 @@ Abgeschlossen:
 - Testmatrix auf PHP 8.3, 8.4 und 8.5 umgestellt
 - lokalen Installations-Smoke-Test automatisiert
 - Versions- und Migrationsmechanismus mit Sicherung und Datenerhalt eingeführt
+- sichere Admin-Ersteinrichtung ohne allgemein bekanntes Standardpasswort eingeführt
 
 Als Nächstes:
 
-1. Admin-Ersteinrichtung ohne allgemein bekanntes Standardpasswort entwickeln.
-2. Backup-Wiederherstellung und zentrale Kernabläufe weiter automatisieren.
-3. Danach den sicheren Veranstaltungsabschluss mit Archiv und Vorlage umsetzen.
+1. Backup-Wiederherstellung und zentrale Kernabläufe weiter automatisieren.
+2. Sicheren Veranstaltungsabschluss mit Archiv und Vorlage umsetzen.
+3. Danach flexible Schichtarten und geführte Einrichtung ausbauen.

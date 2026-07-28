@@ -100,7 +100,7 @@ Kurzfassung für einen frischen Ubuntu-/Debian-Server:
 sudo bash Install/install_helferliste.sh
 ```
 
-Anschließend `https://DEINE-DOMAIN/admin.php` öffnen und sofort das Standardpasswort ändern.
+Anschließend `https://DEINE-DOMAIN/admin.php` öffnen, den einmaligen Einrichtungscode aus dem Installer eingeben und ein eigenes Admin-Passwort festlegen.
 
 ## Ersteinrichtung
 
@@ -134,7 +134,8 @@ Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php`
 ├── ROADMAP.md
 ├── tests/
 │   ├── smoke.php
-│   └── migration.php
+│   ├── migration.php
+│   └── http_admin_setup.sh
 ├── INSTALL.md
 ├── CONFIGURATION.md
 ├── SECURITY.md
@@ -145,8 +146,10 @@ Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php`
 │   ├── database_schema.sql
 │   ├── migration_lib.php
 │   ├── migrate.php
+│   ├── reset_admin.php
 │   ├── migrations/
-│   │   └── 001_baseline.sql
+│   │   ├── 001_baseline.sql
+│   │   └── 002_secure_admin_setup.sql
 │   ├── install_helferliste.sh
 │   └── install_helferliste_windows.bat
 └── www/
