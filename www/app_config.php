@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/version.php';
+
 // Zentrale Projekt-Einstellungen. Fehlende Werte werden automatisch mit sinnvollen Standardwerten belegt.
 function ensureAppSettings(PDO $db): void {
     $db->exec("CREATE TABLE IF NOT EXISTS app_settings (
@@ -127,6 +129,7 @@ function saveAppSetting(PDO $db, string $key, string $value): void {
 }
 
 function appConfig(PDO $db): array {
+    helferlisteRequireCurrentSchema($db);
     $config = [];
     foreach (appDefaults() as $key => $fallback) {
         $config[$key] = appSetting($db, $key, $fallback);

@@ -86,8 +86,14 @@ Jede Ausbaustufe muss:
 
 ## Nächstes Arbeitspaket
 
-1. Testmatrix auf PHP 8.3, 8.4 und 8.5 umstellen.
-2. Lokalen Installationstest und Kernablauf-Test automatisieren.
-3. Versions- und Migrationsmechanismus einführen.
-4. Admin-Ersteinrichtung ohne allgemein bekanntes Standardpasswort entwickeln.
-5. Danach den sicheren Veranstaltungsabschluss mit Archiv und Vorlage umsetzen.
+Abgeschlossen:
+
+- Testmatrix auf PHP 8.3, 8.4 und 8.5 umgestellt
+- lokalen Installations-Smoke-Test automatisiert
+- Versions- und Migrationsmechanismus mit Sicherung und Datenerhalt eingeführt
+
+Als Nächstes:
+
+1. Admin-Ersteinrichtung ohne allgemein bekanntes Standardpasswort entwickeln.
+2. Backup-Wiederherstellung und zentrale Kernabläufe weiter automatisieren.
+3. Danach den sicheren Veranstaltungsabschluss mit Archiv und Vorlage umsetzen.

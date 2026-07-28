@@ -9,6 +9,9 @@ REM   README.md
 REM   www\
 REM   Install\install_helferliste_windows.bat
 REM   Install\database_schema.sql
+REM   Install\migrate.php
+REM   Install\migration_lib.php
+REM   Install\migrations\001_baseline.sql
 REM
 REM Das Script kopiert die Webdateien, erstellt die SQLite-
 REM Datenbank und setzt einfache Rechte. PHP wird nicht
@@ -72,25 +75,14 @@ if exist "%WEB_SOURCE%" (
   exit /b 1
 )
 
-if not exist "%SCRIPT_DIR%database_schema.sql" (
-  echo [FEHLER] database_schema.sql wurde nicht gefunden.
+if not exist "%SCRIPT_DIR%migrate.php" (
+  echo [FEHLER] migrate.php wurde nicht gefunden.
   pause
   exit /b 1
 )
 
-echo [INFO] Erstelle Datenbank ueber PHP ...
-set "INIT_PHP=%TEMP%\helferliste_init_db.php"
-> "%INIT_PHP%" echo ^<?php
->> "%INIT_PHP%" echo $dbFile = $argv[1];
->> "%INIT_PHP%" echo $schemaFile = $argv[2];
->> "%INIT_PHP%" echo if (!extension_loaded('pdo_sqlite')) { fwrite(STDERR, "PHP-Erweiterung pdo_sqlite fehlt. Bitte in php.ini aktivieren.\n"); exit(2); }
->> "%INIT_PHP%" echo $db = new PDO('sqlite:' . $dbFile);
->> "%INIT_PHP%" echo $db-^>setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
->> "%INIT_PHP%" echo $schema = file_get_contents($schemaFile);
->> "%INIT_PHP%" echo $db-^>exec($schema);
->> "%INIT_PHP%" echo echo "Datenbank erstellt/geprueft: " . $dbFile . PHP_EOL;
-
-"%PHP_EXE%" "%INIT_PHP%" "%DB_FILE%" "%SCRIPT_DIR%database_schema.sql"
+echo [INFO] Erstelle oder migriere Datenbank ueber PHP ...
+"%PHP_EXE%" "%SCRIPT_DIR%migrate.php" "%DB_FILE%" "%DATA_DIR%\backups"
 if not "%errorlevel%"=="0" (
   echo.
   echo [FEHLER] Datenbank konnte nicht erstellt werden.
@@ -99,7 +91,6 @@ if not "%errorlevel%"=="0" (
   pause
   exit /b 1
 )
-del "%INIT_PHP%" >nul 2>&1
 
 echo [INFO] Pruefe PHP-Grenzen fuer Bild-Uploads ...
 "%PHP_EXE%" -r "exit(((int)ini_get('upload_max_filesize') >= 8 && (int)ini_get('post_max_size') >= 10) ? 0 : 1);"

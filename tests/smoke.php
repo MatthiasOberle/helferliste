@@ -16,7 +16,6 @@ function assertSameValue(mixed $expected, mixed $actual, string $message): void
 }
 
 $projectRoot = dirname(__DIR__);
-$schemaFile = $projectRoot . '/Install/database_schema.sql';
 $databaseFile = tempnam(sys_get_temp_dir(), 'helferliste-smoke-');
 
 if ($databaseFile === false) {
@@ -24,18 +23,14 @@ if ($databaseFile === false) {
 }
 
 try {
-    $schema = file_get_contents($schemaFile);
-    if ($schema === false || trim($schema) === '') {
-        fail('Datenbankschema konnte nicht gelesen werden.');
-    }
+    require_once $projectRoot . '/Install/migration_lib.php';
+    $migration = helferlisteMigrateDatabase($databaseFile);
+    assertSameValue(true, $migration['changed'], 'Neuinstallation wurde nicht als Migration erkannt.');
+    assertSameValue(HELFERLISTE_SCHEMA_VERSION, $migration['to_version'], 'Neuinstallation hat nicht die aktuelle Schema-Version erreicht.');
 
     $db = new PDO('sqlite:' . $databaseFile);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $db->exec('PRAGMA foreign_keys = ON');
-
-    // Das Schema muss sowohl eine Neuinstallation als auch einen erneuten Lauf aushalten.
-    $db->exec($schema);
-    $db->exec($schema);
 
     $tables = $db->query("SELECT name FROM sqlite_master WHERE type = 'table'")
         ->fetchAll(PDO::FETCH_COLUMN);
@@ -50,6 +45,7 @@ try {
         'visit_stats',
         'event_log',
         'app_settings',
+        'schema_migrations',
     ];
 
     foreach ($requiredTables as $table) {
@@ -62,6 +58,7 @@ try {
     assertSameValue(2, (int)$db->query('SELECT COUNT(*) FROM springer_shifts')->fetchColumn(), 'Beispiel-Springerschichten wurden mehrfach oder unvollständig angelegt.');
     assertSameValue(1, (int)$db->query("SELECT COUNT(*) FROM event_log WHERE action = 'installed'")->fetchColumn(), 'Installationsprotokoll wurde mehrfach oder nicht angelegt.');
     assertSameValue([], $db->query('PRAGMA foreign_key_check')->fetchAll(PDO::FETCH_ASSOC), 'Fremdschlüsselprüfung ist fehlgeschlagen.');
+    assertSameValue(HELFERLISTE_SCHEMA_VERSION, (int)$db->query('PRAGMA user_version')->fetchColumn(), 'Schema-Version ist nicht gesetzt.');
 
     require_once $projectRoot . '/www/app_config.php';
     $defaults = appConfig($db);

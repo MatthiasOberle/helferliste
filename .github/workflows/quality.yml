@@ -37,3 +37,6 @@ jobs:
 
       - name: Installation und Einstellungen prüfen
         run: php tests/smoke.php
+
+      - name: Aktualisierung und Datenerhalt prüfen
+        run: php tests/migration.php

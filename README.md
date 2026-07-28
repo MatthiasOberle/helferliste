@@ -124,6 +124,8 @@ Alle veränderlichen Daten liegen in:
 
 Beide Orte gehören nicht in Git und werden durch `.gitignore` ausgeschlossen. Für ein vollständiges Backup müssen beide gesichert werden. Der Linux-Installer erhält vorhandene Bild-Uploads bei einer Aktualisierung.
 
+Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php` prüft Neuinstallationen und Aktualisierungen, erstellt vor notwendigen Migrationen eine konsistente SQLite-Sicherung und bricht bei Integritätsfehlern ab.
+
 ## Projektstruktur
 
 ```text
@@ -131,7 +133,8 @@ Beide Orte gehören nicht in Git und werden durch `.gitignore` ausgeschlossen. F
 ├── README.md
 ├── ROADMAP.md
 ├── tests/
-│   └── smoke.php
+│   ├── smoke.php
+│   └── migration.php
 ├── INSTALL.md
 ├── CONFIGURATION.md
 ├── SECURITY.md
@@ -140,9 +143,14 @@ Beide Orte gehören nicht in Git und werden durch `.gitignore` ausgeschlossen. F
 ├── LICENSE
 ├── Install/
 │   ├── database_schema.sql
+│   ├── migration_lib.php
+│   ├── migrate.php
+│   ├── migrations/
+│   │   └── 001_baseline.sql
 │   ├── install_helferliste.sh
 │   └── install_helferliste_windows.bat
 └── www/
+    ├── version.php
     ├── index.php
     ├── admin.php
     ├── settings.php

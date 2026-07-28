@@ -35,7 +35,8 @@ Das Script:
 - installiert Nginx, PHP-FPM, SQLite und benötigte Werkzeuge
 - legt `/var/www/helferliste/public` und `/var/www/helferliste/data` an
 - kopiert die Webdateien
-- erstellt oder ergänzt die SQLite-Datenbank
+- erstellt oder migriert die SQLite-Datenbank kontrolliert
+- legt vor einer notwendigen Migration automatisch eine konsistente Datenbanksicherung an
 - konfiguriert Uploads bis 8 MB
 - setzt Dateirechte
 - richtet Nginx ein
@@ -82,11 +83,15 @@ sudo mkdir -p /var/www/helferliste/data
 sudo rsync -a www/ /var/www/helferliste/public/
 ```
 
-### 3. Datenbank erstellen
+### 3. Datenbank erstellen oder aktualisieren
 
 ```bash
-sudo sqlite3 /var/www/helferliste/data/helferliste.sqlite < Install/database_schema.sql
+sudo php Install/migrate.php \
+  /var/www/helferliste/data/helferliste.sqlite \
+  /var/www/helferliste/data/backups
 ```
+
+Das Migrationswerkzeug prüft die vorhandene Schema-Version und die SQLite-Integrität. Nur wenn eine Änderung notwendig ist, wird zuvor unter `data/backups/` eine konsistente Sicherung erstellt. Bereits aktuelle Datenbanken bleiben unverändert.
 
 ### 4. Rechte setzen
 
@@ -220,9 +225,9 @@ Vor jeder Aktualisierung sichern:
 /var/www/helferliste/public/assets/uploads/
 ```
 
-Danach die neue Version bereitstellen und den Linux-Installer erneut ausführen. Er ergänzt das Datenbankschema und erhält vorhandene PNG-, JPG-, JPEG-, WebP- und GIF-Dateien im Upload-Ordner.
+Danach die neue Version bereitstellen und den Linux-Installer erneut ausführen. Er führt ausstehende Datenbankmigrationen in der richtigen Reihenfolge aus und erhält vorhandene PNG-, JPG-, JPEG-, WebP- und GIF-Dateien im Upload-Ordner.
 
-Bei einer manuellen oder Windows-Aktualisierung müssen Datenbank und Upload-Ordner selbst geschützt werden. Nie eine leere Datenbank oder einen leeren Upload-Ordner ungeprüft über die Produktivdaten kopieren.
+Bei einer manuellen Aktualisierung wird die Datenbank mit `Install/migrate.php` aktualisiert. Der Windows-Installer verwendet dasselbe Werkzeug. Der Upload-Ordner muss weiterhin separat gesichert werden. Nie eine leere Datenbank oder einen leeren Upload-Ordner ungeprüft über die Produktivdaten kopieren.
 
 ## Backup und Wiederherstellung
 
@@ -233,6 +238,8 @@ Für ein vollständiges Backup:
 3. Version der eingesetzten Anwendung notieren.
 
 Vor dem Kopieren einer aktiven SQLite-Datenbank sollte nach Möglichkeit kurz der Schreibzugriff gestoppt oder die SQLite-Backup-Funktion verwendet werden. Zur Wiederherstellung beide Sicherungen an ihre ursprünglichen Orte zurückkopieren und Besitz/Rechte prüfen.
+
+Vor einer automatischen Schemaänderung erzeugte Datenbanksicherungen liegen standardmäßig unter `data/backups/`. Zur Wiederherstellung zuerst den Webzugriff kurz stoppen, die aktuelle Datenbank zusätzlich sichern, die gewünschte Sicherungsdatei als `helferliste.sqlite` einsetzen und anschließend Rechte sowie `PRAGMA quick_check` und `PRAGMA foreign_key_check` prüfen.
 
 ## Häufige Probleme
 

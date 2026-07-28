@@ -10,10 +10,14 @@ Alle wichtigen Änderungen dieses Projekts werden hier dokumentiert.
 - Produkt-Roadmap mit klarer Abgrenzung zu SaaS und Mandantenbetrieb ergänzt
 - Mindestversion auf PHP 8.3 angehoben
 - automatische Prüfmatrix auf PHP 8.3, 8.4 und 8.5 aktualisiert
+- Linux- und Windows-Installer auf den gemeinsamen Migrationsmechanismus umgestellt
 
 ### Ergänzt
 
 - wiederholbaren Smoke-Test für Neuinstallation, Datenbankschema, Fremdschlüssel und Einstellungen ergänzt
+- Anwendungsversion `1.1.0-dev` und fortlaufende Datenbank-Schema-Version eingeführt
+- konsistente SQLite-Sicherung vor notwendigen Migrationen ergänzt
+- Aktualisierungstest mit Erhalt vorhandener Zugangscodes, Rückmeldungen und Einstellungen ergänzt
 
 ## 1.0.1 – 2026-07-27
 

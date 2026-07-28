@@ -40,7 +40,7 @@ ask_questions(){
 install_packages(){
   info "Installiere benoetigte Pakete ..."
   apt update
-  apt install -y nginx php-fpm php-sqlite3 sqlite3 unzip curl ca-certificates rsync
+  apt install -y nginx php-fpm php-cli php-sqlite3 sqlite3 unzip curl ca-certificates rsync
   ok "Pakete installiert."
 }
 
@@ -90,12 +90,10 @@ copy_project_files(){
 }
 
 create_database(){
-  info "Erstelle/pruefe SQLite-Datenbank ..."
-  if [[ -f "${SCRIPT_DIR}/database_schema.sql" ]]; then
-    sqlite3 "${DB_FILE}" < "${SCRIPT_DIR}/database_schema.sql"
-  else
-    fail "database_schema.sql wurde nicht gefunden. Bitte komplettes Paket hochladen."
-  fi
+  info "Erstelle/pruefe und migriere SQLite-Datenbank ..."
+  [[ -f "${SCRIPT_DIR}/migrate.php" ]] || fail "migrate.php wurde nicht gefunden. Bitte komplettes Paket hochladen."
+  command -v php >/dev/null 2>&1 || fail "PHP-CLI wurde nicht gefunden."
+  php "${SCRIPT_DIR}/migrate.php" "${DB_FILE}" "${DATA_DIR}/backups"
   ok "Datenbank bereit: ${DB_FILE}"
 }
 

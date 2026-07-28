@@ -359,6 +359,7 @@ $openRequests = (int)$db->query("SELECT COUNT(*) FROM change_requests WHERE stat
     <div class="card">
         <h1>Adminbereich <?= h(appTitle($appConfig)) ?></h1>
         <?php if (appSubtitle($appConfig) !== ''): ?><p class="muted"><?= h(appSubtitle($appConfig)) ?></p><?php endif; ?>
+        <p class="muted">Version <?= h(HELFERLISTE_VERSION) ?> · Datenbankschema <?= (int)$db->query('PRAGMA user_version')->fetchColumn() ?></p>
         <?php adminNav('admin'); ?>
     </div>
 
