@@ -8,6 +8,7 @@ $db = new PDO('sqlite:' . __DIR__ . '/../data/helferliste.sqlite');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 require_once __DIR__ . '/app_config.php';
+require_once __DIR__ . '/shift_helpers.php';
 require_once __DIR__ . '/tracking.php';
 $appConfig = appConfig($db);
 
@@ -68,7 +69,7 @@ function getEntryShiftTitles(PDO $db, int $entryId, string $linkTable, string $s
 }
 
 function getEntryShiftBadges(PDO $db, int $entryId, string $linkTable, string $shiftTable, string $column, string $prefix): array {
-    $stmt = $db->prepare("SELECT s.title, (
+    $stmt = $db->prepare("SELECT s.*, (
             SELECT COUNT(*)
             FROM {$shiftTable} s2
             WHERE s2.sort_order < s.sort_order
@@ -83,7 +84,7 @@ function getEntryShiftBadges(PDO $db, int $entryId, string $linkTable, string $s
 
     return array_map(fn($row) => [
         'label' => $prefix . (int)$row['shift_number'],
-        'title' => (string)$row['title'],
+        'title' => shiftDisplayLabel($row),
     ], $rows);
 }
 
@@ -151,6 +152,12 @@ function fillPercent(int $used, int $max): int {
 
 $message = '';
 $error = '';
+$setupWizardCompleted = appSetupWizardCompleted($appConfig);
+$setupWizardIssues = appPublicationIssues($db, $appConfig);
+if (isset($_SESSION['admin_flash'])) {
+    $message = (string)$_SESSION['admin_flash'];
+    unset($_SESSION['admin_flash']);
+}
 $showPasswordForm = isset($_GET['change_password']);
 
 if (isset($_GET['logout'])) {
@@ -170,11 +177,12 @@ if ($action === 'change_admin_password') {
         $newPassword = (string)($_POST['new_password'] ?? '');
         $repeatPassword = (string)($_POST['repeat_password'] ?? '');
 
-        if (!password_verify($currentPassword, getAdminPasswordHash())) {
+        $currentPasswordHash = getAdminPasswordHash();
+        if ($currentPasswordHash === null || !password_verify($currentPassword, $currentPasswordHash)) {
             $error = 'Das aktuelle Passwort stimmt nicht.';
             $showPasswordForm = true;
-        } elseif (strlen($newPassword) < 6) {
-            $error = 'Das neue Passwort muss mindestens 6 Zeichen lang sein.';
+        } elseif (strlen($newPassword) < 12) {
+            $error = 'Das neue Passwort muss mindestens 12 Zeichen lang sein.';
             $showPasswordForm = true;
         } elseif ($newPassword !== $repeatPassword) {
             $error = 'Die Wiederholung stimmt nicht mit dem neuen Passwort überein.';
@@ -182,6 +190,7 @@ if ($action === 'change_admin_password') {
         } else {
             try {
                 setAdminPassword($newPassword);
+                $_SESSION['admin_auth_generation'] = getAdminAuthGeneration();
                 logEvent($db, 'admin_password_changed', 'Admin-Passwort wurde geändert.');
                 $message = 'Admin-Passwort wurde geändert.';
                 $showPasswordForm = false;
@@ -359,30 +368,40 @@ $openRequests = (int)$db->query("SELECT COUNT(*) FROM change_requests WHERE stat
     <div class="card">
         <h1>Adminbereich <?= h(appTitle($appConfig)) ?></h1>
         <?php if (appSubtitle($appConfig) !== ''): ?><p class="muted"><?= h(appSubtitle($appConfig)) ?></p><?php endif; ?>
+        <p class="muted">Version <?= h(HELFERLISTE_VERSION) ?> · Datenbankschema <?= (int)$db->query('PRAGMA user_version')->fetchColumn() ?></p>
         <?php adminNav('admin'); ?>
     </div>
 
     <?php if ($message !== ''): ?><div class="notice success"><?= h($message) ?></div><?php endif; ?>
     <?php if ($error !== ''): ?><div class="notice error"><?= h($error) ?></div><?php endif; ?>
 
-
-    <?php if (adminPasswordIsDefault()): ?>
-        <div class="notice error">Aktuell ist noch das Standardpasswort aktiv. Bitte im Adminbereich ändern, damit nicht jeder mit dem Konami-Code durch die Tür spaziert.</div>
+    <?php if (!$setupWizardCompleted): ?>
+        <div class="card">
+            <h2>Einrichtung gemeinsam abschließen</h2>
+            <p>Der neue Assistent führt durch Veranstaltung, Pflichtangaben, erste Schicht und Veröffentlichung.</p>
+            <?php if ($setupWizardIssues !== []): ?>
+                <p class="muted">Noch offen: <?= h(implode(', ', $setupWizardIssues)) ?>.</p>
+            <?php else: ?>
+                <p class="muted">Die notwendigen Angaben sind vorhanden. Der Assistent kann sie prüfen und den Einrichtungsstand bestätigen.</p>
+            <?php endif; ?>
+            <div class="buttons"><a class="btn" href="setup_wizard.php">Einrichtungsassistent starten</a></div>
+        </div>
     <?php endif; ?>
+
 
     <?php if ($showPasswordForm): ?>
         <div class="card">
             <h2>Admin-Passwort ändern</h2>
-            <p class="muted">Das Passwort darf frei gewählt werden und muss mindestens 6 Zeichen lang sein.</p>
+            <p class="muted">Das Passwort darf frei gewählt werden und muss mindestens 12 Zeichen lang sein.</p>
             <form method="post">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="change_admin_password">
                 <label>Aktuelles Passwort</label>
                 <input type="password" name="current_password" required>
                 <label>Neues Passwort</label>
-                <input type="password" name="new_password" minlength="6" required>
+                <input type="password" name="new_password" minlength="12" autocomplete="new-password" required>
                 <label>Neues Passwort wiederholen</label>
-                <input type="password" name="repeat_password" minlength="6" required>
+                <input type="password" name="repeat_password" minlength="12" autocomplete="new-password" required>
                 <button type="submit">Passwort speichern</button>
             </form>
         </div>
@@ -421,6 +440,7 @@ $openRequests = (int)$db->query("SELECT COUNT(*) FROM change_requests WHERE stat
                 <div class="shift <?= h(fillClass($used, $max)) ?>">
                     <div class="shift-top">
                         <strong><?= h((string)$shift['title']) ?></strong>
+                        <?php if (shiftScheduleText($shift) !== ''): ?><span class="muted"><?= h(shiftScheduleText($shift)) ?></span><?php endif; ?>
                         <span class="shift-count"><?= $used ?> von <?= $max ?></span>
                     </div>
                     <div class="load-bar" title="<?= $used ?> von <?= $max ?> Plätzen belegt">
@@ -443,6 +463,7 @@ $openRequests = (int)$db->query("SELECT COUNT(*) FROM change_requests WHERE stat
                 <div class="shift <?= h(fillClass($used, $max)) ?>">
                     <div class="shift-top">
                         <strong><?= h((string)$shift['title']) ?></strong>
+                        <?php if (shiftScheduleText($shift) !== ''): ?><span class="muted"><?= h(shiftScheduleText($shift)) ?></span><?php endif; ?>
                         <span class="shift-count"><?= $used ?> von <?= $max ?></span>
                     </div>
                     <div class="load-bar" title="<?= $used ?> von <?= $max ?> Springer-Plätzen belegt">

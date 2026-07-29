@@ -9,6 +9,14 @@ REM   README.md
 REM   www\
 REM   Install\install_helferliste_windows.bat
 REM   Install\database_schema.sql
+REM   Install\migrate.php
+REM   Install\migration_lib.php
+REM   Install\restore.php
+REM   Install\reset_admin.php
+REM   Install\migrations\001_baseline.sql
+REM   Install\migrations\002_secure_admin_setup.sql
+REM   Install\migrations\003_event_archives.sql
+REM   Install\migrations\004_event_schedule_and_shift_fields.sql
 REM
 REM Das Script kopiert die Webdateien, erstellt die SQLite-
 REM Datenbank und setzt einfache Rechte. PHP wird nicht
@@ -35,7 +43,7 @@ cls
 echo Helferliste Installation fuer Windows Server / XAMPP
 echo ----------------------------------------------------
 echo.
-echo Empfohlen fuer Einsteiger: XAMPP oder IIS mit installiertem PHP 8.x.
+echo Empfohlen fuer Einsteiger: XAMPP oder IIS mit installiertem PHP 8.3 oder neuer.
 echo Dieses Script richtet die App-Dateien ein. PHP mit pdo_sqlite muss bereits funktionieren.
 echo.
 set /p APP_ROOT="Installationsordner [%APP_ROOT%]: "
@@ -72,25 +80,14 @@ if exist "%WEB_SOURCE%" (
   exit /b 1
 )
 
-if not exist "%SCRIPT_DIR%database_schema.sql" (
-  echo [FEHLER] database_schema.sql wurde nicht gefunden.
+if not exist "%SCRIPT_DIR%migrate.php" (
+  echo [FEHLER] migrate.php wurde nicht gefunden.
   pause
   exit /b 1
 )
 
-echo [INFO] Erstelle Datenbank ueber PHP ...
-set "INIT_PHP=%TEMP%\helferliste_init_db.php"
-> "%INIT_PHP%" echo ^<?php
->> "%INIT_PHP%" echo $dbFile = $argv[1];
->> "%INIT_PHP%" echo $schemaFile = $argv[2];
->> "%INIT_PHP%" echo if (!extension_loaded('pdo_sqlite')) { fwrite(STDERR, "PHP-Erweiterung pdo_sqlite fehlt. Bitte in php.ini aktivieren.\n"); exit(2); }
->> "%INIT_PHP%" echo $db = new PDO('sqlite:' . $dbFile);
->> "%INIT_PHP%" echo $db-^>setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
->> "%INIT_PHP%" echo $schema = file_get_contents($schemaFile);
->> "%INIT_PHP%" echo $db-^>exec($schema);
->> "%INIT_PHP%" echo echo "Datenbank erstellt/geprueft: " . $dbFile . PHP_EOL;
-
-"%PHP_EXE%" "%INIT_PHP%" "%DB_FILE%" "%SCRIPT_DIR%database_schema.sql"
+echo [INFO] Erstelle oder migriere Datenbank ueber PHP ...
+"%PHP_EXE%" "%SCRIPT_DIR%migrate.php" "%DB_FILE%" "%DATA_DIR%\backups"
 if not "%errorlevel%"=="0" (
   echo.
   echo [FEHLER] Datenbank konnte nicht erstellt werden.
@@ -99,7 +96,6 @@ if not "%errorlevel%"=="0" (
   pause
   exit /b 1
 )
-del "%INIT_PHP%" >nul 2>&1
 
 echo [INFO] Pruefe PHP-Grenzen fuer Bild-Uploads ...
 "%PHP_EXE%" -r "exit(((int)ini_get('upload_max_filesize') >= 8 && (int)ini_get('post_max_size') >= 10) ? 0 : 1);"
@@ -133,8 +129,8 @@ echo 3. Bindung: deine Domain oder IP eintragen.
 echo 4. PHP/FastCGI pruefen. Falls web.config einen anderen PHP-Pfad braucht,
 echo    bitte public\web.config anpassen.
 echo 5. Admin oeffnen: http://DEINE-DOMAIN/admin.php
-echo 6. Login: admin / GetYourOwnWebsite
-echo 7. Direkt das Passwort aendern.
+echo 6. Den oben ausgegebenen einmaligen Einrichtungscode verwenden.
+echo 7. Ein eigenes Admin-Passwort mit mindestens 12 Zeichen festlegen.
 echo.
 echo Hinweis fuer XAMPP:
 echo Du kannst als Installationsordner auch C:\xampp\htdocs\helferliste nehmen.

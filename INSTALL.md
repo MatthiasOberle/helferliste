@@ -8,7 +8,7 @@ Die Helferliste ist ein Open-Source-Projekt von **[MOWST — Digitale Werkstatt]
 
 Benötigt werden:
 
-- PHP 8.0 oder neuer
+- PHP 8.3 oder neuer
 - `pdo_sqlite` und `fileinfo`
 - SQLite 3
 - ein Webserver mit PHP-Unterstützung
@@ -35,7 +35,8 @@ Das Script:
 - installiert Nginx, PHP-FPM, SQLite und benötigte Werkzeuge
 - legt `/var/www/helferliste/public` und `/var/www/helferliste/data` an
 - kopiert die Webdateien
-- erstellt oder ergänzt die SQLite-Datenbank
+- erstellt oder migriert die SQLite-Datenbank kontrolliert
+- legt vor einer notwendigen Migration automatisch eine konsistente Datenbanksicherung an
 - konfiguriert Uploads bis 8 MB
 - setzt Dateirechte
 - richtet Nginx ein
@@ -49,12 +50,7 @@ https://DEINE-DOMAIN/admin.php
 
 Erster Zugang:
 
-```text
-Benutzername: admin
-Passwort: GetYourOwnWebsite
-```
-
-Das Passwort muss direkt nach dem ersten Login unter `System → Passwort ändern` ersetzt werden.
+Der Installer zeigt einen zufälligen, einmaligen Einrichtungscode. Beim ersten Aufruf von `admin.php` wird dieser Code eingegeben und ein eigenes Admin-Passwort mit mindestens 12 Zeichen festgelegt. Der Code wird nur als Hash gespeichert und nach erfolgreicher Einrichtung gelöscht. Es gibt kein allgemein bekanntes Standardpasswort mehr.
 
 ## Variante B: Linux manuell
 
@@ -64,7 +60,7 @@ Beispiel für Ubuntu/Debian:
 
 ```bash
 sudo apt update
-sudo apt install nginx php-fpm php-sqlite3 sqlite3 rsync
+sudo apt install nginx php-fpm php-cli php-sqlite3 sqlite3 rsync
 ```
 
 Prüfen:
@@ -82,11 +78,15 @@ sudo mkdir -p /var/www/helferliste/data
 sudo rsync -a www/ /var/www/helferliste/public/
 ```
 
-### 3. Datenbank erstellen
+### 3. Datenbank erstellen oder aktualisieren
 
 ```bash
-sudo sqlite3 /var/www/helferliste/data/helferliste.sqlite < Install/database_schema.sql
+sudo php Install/migrate.php \
+  /var/www/helferliste/data/helferliste.sqlite \
+  /var/www/helferliste/data/backups
 ```
+
+Das Migrationswerkzeug prüft die vorhandene Schema-Version und die SQLite-Integrität. Nur wenn eine Änderung notwendig ist, wird zuvor unter `data/backups/` eine konsistente Sicherung erstellt. Bereits aktuelle Datenbanken bleiben unverändert.
 
 ### 4. Rechte setzen
 
@@ -165,7 +165,7 @@ Danach HTTPS einrichten, beispielsweise mit Certbot.
 
 Voraussetzungen:
 
-- PHP 8.x für IIS/FastCGI
+- PHP 8.3 oder neuer für IIS/FastCGI
 - aktivierte Erweiterungen `pdo_sqlite` und `fileinfo`
 - IIS mit CGI/FastCGI
 - Schreibrechte für den IIS-Benutzer
@@ -179,7 +179,7 @@ Danach im IIS-Manager:
 3. PHP/FastCGI prüfen.
 4. Kontrollieren, ob `www/web.config` zum installierten PHP-Pfad passt.
 5. HTTPS-Bindung und Zertifikat einrichten.
-6. `admin.php` öffnen und Standardpasswort ändern.
+6. `admin.php` öffnen, einmaligen Einrichtungscode eingeben und eigenes Passwort festlegen.
 
 Falls Bilder über 8 MB oder bereits kleinere Bilder nicht hochgeladen werden können, in der verwendeten `php.ini` mindestens `upload_max_filesize = 8M` und `post_max_size = 10M` setzen und IIS/PHP-FastCGI neu starten.
 
@@ -199,15 +199,14 @@ Diese Variante ist ohne zusätzliche Härtung nicht als Empfehlung für einen ö
 
 Nach jeder neuen Installation:
 
-1. Standardpasswort ändern.
-2. `System → Einstellungen` öffnen.
-3. App-Name, Organisation und Veranstaltung eintragen.
-4. öffentliche Basis-URL kontrollieren.
-5. Impressum und Datenschutzkontakt vollständig ausfüllen.
-6. Kopfbild, Farben, Schriftart und öffentliche Texte prüfen.
-7. Beispielschichten löschen oder bearbeiten.
-8. echte Schichten anlegen.
-9. Zugangscodes erstellen und einen vollständigen Test durchführen.
+1. Einmaligen Einrichtungscode verwenden und eigenes Admin-Passwort festlegen.
+2. Den automatisch geöffneten Einrichtungsassistenten durchlaufen.
+3. App-Name, Organisation und Veranstaltungszeitraum eintragen.
+4. öffentliche Basis-URL, Impressum und Datenschutzkontakt vollständig ausfüllen.
+5. mindestens eine konkrete Schicht anlegen; unbenutzte Beispielschichten werden dabei deaktiviert.
+6. Einrichtung zunächst als Entwurf abschließen oder bewusst veröffentlichen.
+7. Kopfbild, Farben, Schriftart und öffentliche Texte prüfen.
+8. Zugangscodes erstellen und einen vollständigen Test durchführen.
 
 Details enthält [CONFIGURATION.md](CONFIGURATION.md).
 
@@ -220,9 +219,9 @@ Vor jeder Aktualisierung sichern:
 /var/www/helferliste/public/assets/uploads/
 ```
 
-Danach die neue Version bereitstellen und den Linux-Installer erneut ausführen. Er ergänzt das Datenbankschema und erhält vorhandene PNG-, JPG-, JPEG-, WebP- und GIF-Dateien im Upload-Ordner.
+Danach die neue Version bereitstellen und den Linux-Installer erneut ausführen. Er führt ausstehende Datenbankmigrationen in der richtigen Reihenfolge aus und erhält vorhandene PNG-, JPG-, JPEG-, WebP- und GIF-Dateien im Upload-Ordner.
 
-Bei einer manuellen oder Windows-Aktualisierung müssen Datenbank und Upload-Ordner selbst geschützt werden. Nie eine leere Datenbank oder einen leeren Upload-Ordner ungeprüft über die Produktivdaten kopieren.
+Bei einer manuellen Aktualisierung wird die Datenbank mit `Install/migrate.php` aktualisiert. Der Windows-Installer verwendet dasselbe Werkzeug. Der Upload-Ordner muss weiterhin separat gesichert werden. Nie eine leere Datenbank oder einen leeren Upload-Ordner ungeprüft über die Produktivdaten kopieren.
 
 ## Backup und Wiederherstellung
 
@@ -233,6 +232,17 @@ Für ein vollständiges Backup:
 3. Version der eingesetzten Anwendung notieren.
 
 Vor dem Kopieren einer aktiven SQLite-Datenbank sollte nach Möglichkeit kurz der Schreibzugriff gestoppt oder die SQLite-Backup-Funktion verwendet werden. Zur Wiederherstellung beide Sicherungen an ihre ursprünglichen Orte zurückkopieren und Besitz/Rechte prüfen.
+
+Vor einer automatischen Schemaänderung und vor einem Veranstaltungsabschluss erzeugte Datenbanksicherungen liegen standardmäßig unter `data/backups/`. Zur geprüften Wiederherstellung zuerst den Webzugriff stoppen und dann ausführen:
+
+```bash
+sudo php Install/restore.php \
+  /var/www/helferliste/data/backups/GEWUENSCHTE-SICHERUNG.sqlite \
+  /var/www/helferliste/data/helferliste.sqlite \
+  /var/www/helferliste/data/backups
+```
+
+Das Werkzeug prüft die Sicherung, legt vor dem Austausch eine weitere Sicherung des aktuell aktiven Stands an, ersetzt die Datenbank atomar und führt bei Bedarf die aktuellen Migrationen aus. Anschließend Besitz und Rechte der Datenbank kontrollieren und den Webzugriff wieder starten. Eigene Kopfbilder müssen weiterhin separat aus der Sicherung von `assets/uploads/` wiederhergestellt werden.
 
 ## Häufige Probleme
 
@@ -263,4 +273,12 @@ Unter `System → Einstellungen` die öffentliche Basis-URL einschließlich `htt
 
 ### Admin-Passwort vergessen
 
-Es gibt absichtlich keinen öffentlichen automatischen Passwort-Reset. Eine Wiederherstellung muss durch eine berechtigte Person mit Serverzugriff erfolgen.
+Es gibt absichtlich keinen öffentlichen automatischen Passwort-Reset. Eine berechtigte Person erzeugt direkt auf dem Server einen neuen einmaligen Einrichtungscode:
+
+```bash
+sudo php Install/reset_admin.php \
+  /var/www/helferliste/data/helferliste.sqlite \
+  /var/www/helferliste/data/backups
+```
+
+Vor dem Reset wird automatisch eine konsistente Datenbanksicherung erstellt. Das bisherige Passwort und bestehende Admin-Sitzungen werden ungültig. Anschließend wird unter `admin.php` mit dem neuen Einrichtungscode ein neues Passwort gesetzt.

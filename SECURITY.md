@@ -22,7 +22,7 @@ Keine realen personenbezogenen Daten, Zugangscodes, Passwörter oder vollständi
 
 ## Checkliste für Betreiber
 
-- Standardpasswort sofort ändern
+- einmaligen Einrichtungscode nur vertraulich übernehmen und ein eigenes Passwort mit mindestens 12 Zeichen setzen
 - Anwendung ausschließlich über HTTPS betreiben
 - Adminbereich nicht unnötig öffentlich bewerben
 - Betriebssystem, Webserver und PHP aktuell halten

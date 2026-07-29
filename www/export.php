@@ -8,6 +8,7 @@ $db = new PDO('sqlite:' . __DIR__ . '/../data/helferliste.sqlite');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 require_once __DIR__ . '/app_config.php';
+require_once __DIR__ . '/shift_helpers.php';
 $appConfig = appConfig($db);
 
 function h(string $value): string {
@@ -29,14 +30,14 @@ function cleanCell(string $value): string {
 
 // Schichttitel werden als kommagetrennte Liste in eine Exportzelle geschrieben.
 function getEntryShiftTitles(PDO $db, int $entryId, string $linkTable, string $shiftTable, string $column): string {
-    $stmt = $db->prepare("SELECT s.title
+    $stmt = $db->prepare("SELECT s.*
         FROM {$linkTable} es
         JOIN {$shiftTable} s ON s.id = es.{$column}
         WHERE es.entry_id = ?
         ORDER BY s.sort_order ASC, s.id ASC");
     $stmt->execute([$entryId]);
-    $titles = $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
-    return implode(', ', $titles);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    return implode(', ', array_map('shiftDisplayLabel', $rows));
 }
 
 function changeRequestStatusLabel(string $status): string {

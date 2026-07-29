@@ -8,6 +8,12 @@ Entwickelt und gepflegt von **[MOWST — Digitale Werkstatt](https://mowst.de)**
 
 Helfer benötigen kein Benutzerkonto und keine App. Ein persönlicher vierstelliger Code oder Direktlink genügt. Die Anwendung benötigt weder Framework noch Composer oder Node.js: PHP 8.x und SQLite reichen aus.
 
+## Woran ich gerade arbeite
+
+Die Helferliste ist kein abgeschlossenes Archivprojekt. Ich entwickle sie Schritt für Schritt zu einem Werkzeug weiter, das sich auch außerhalb der Feuerwehr einfach einsetzen lässt.
+
+Im aktuellen Entwicklungszweig sind bereits eine geführte Ersteinrichtung, sichere Datenbankaktualisierungen, Veranstaltungsarchive sowie deutlich flexiblere Schichten hinzugekommen. Neue Funktionen werden dort zuerst praktisch getestet und laufen automatisch unter PHP 8.3, 8.4 und 8.5 durch. Der Hauptzweig bleibt der ruhige, stabile Stand für veröffentlichte Versionen.
+
 ## Einblicke
 
 Alle abgebildeten Namen, E-Mail-Adressen, Codes und Veranstaltungsangaben sind frei erfundene Testdaten.
@@ -49,11 +55,18 @@ Alle abgebildeten Namen, E-Mail-Adressen, Codes und Veranstaltungsangaben sind f
 - Rückmeldungen bearbeiten und löschen
 - Änderungswünsche bearbeiten, ablehnen und dokumentieren
 - normale und flexible Schichten mit Kapazität und Reihenfolge verwalten
+- Datum, Beginn, Ende, Ort und öffentlichen Hinweis je Schicht pflegen
+- Schichten mit allen Angaben duplizieren
 - Zugangscodes einzeln oder aus E-Mail-Listen erzeugen
 - persönliche Einladungslinks kopieren
 - ungenutzte Codes bereinigen
-- Veranstaltungsdaten kontrolliert zurücksetzen
+- Veranstaltung kontrolliert abschließen und aktive Daten zurücksetzen
 - Admin-Passwort in der Oberfläche ändern
+- automatische Sicherung beim Abschluss und Start der nächsten Veranstaltung aus einer Vorlage
+- abgeschlossene Veranstaltungen mit anonymen Ergebnissen und Schichtauslastung archivieren
+- personenbezogene Archivdaten optional exportieren und kontrolliert löschen
+- Veranstaltung als Entwurf, veröffentlicht oder abgeschlossen verwalten
+- Veröffentlichung erst nach verständlicher Prüfung der technischen Pflichtangaben
 - umschaltbare Mobil- und Desktopansicht
 
 ### Anpassung ohne Programmierkenntnisse
@@ -83,7 +96,7 @@ Mitgeliefert werden neutrale Motive für Feuerwehr, THW und Notarzt. Eigene PNG-
 
 ## Voraussetzungen
 
-- PHP 8.0 oder neuer
+- PHP 8.3 oder neuer; automatisch geprüft werden PHP 8.3, 8.4 und 8.5
 - PHP-Erweiterungen `pdo_sqlite` und `fileinfo`
 - SQLite 3
 - Webserver mit PHP-Unterstützung, empfohlen: Nginx oder Apache; IIS ist ebenfalls möglich
@@ -100,18 +113,18 @@ Kurzfassung für einen frischen Ubuntu-/Debian-Server:
 sudo bash Install/install_helferliste.sh
 ```
 
-Anschließend `https://DEINE-DOMAIN/admin.php` öffnen und sofort das Standardpasswort ändern.
+Anschließend `https://DEINE-DOMAIN/admin.php` öffnen, den einmaligen Einrichtungscode aus dem Installer eingeben und ein eigenes Admin-Passwort festlegen. Bei einer neuen Installation öffnet sich danach automatisch der vierstufige Einrichtungsassistent.
 
 ## Ersteinrichtung
 
-Die Git-Version enthält bewusst keine persönlichen Daten. Nach der Installation müssen folgende Angaben ergänzt werden:
+Die Git-Version enthält bewusst keine persönlichen Daten. Der Einrichtungsassistent führt ohne technisches Vorwissen durch:
 
-1. Admin-Passwort ändern.
-2. Organisation, Veranstaltung und öffentliche URL eintragen.
-3. Impressum und Datenschutzkontakt vervollständigen.
-4. Kopfbild, Farben und Seitentexte prüfen.
-5. Beispielschichten ersetzen.
-6. Zugangscodes für echte Helfer erzeugen.
+1. Organisation, Veranstaltung und Zeitraum.
+2. öffentliche URL, Impressum und Datenschutzkontakt.
+3. erste konkrete Schicht.
+4. Abschluss als geschützter Entwurf oder direkte Veröffentlichung.
+
+Mitgelieferte Schichten mit dem Präfix `Beispiel:` gelten nicht als veröffentlichungsfertig. Beim Anlegen der ersten echten Schicht deaktiviert der Assistent unbenutzte Beispiele. Kopfbild, Farben, Seitentexte und Zugangscodes werden anschließend in den normalen Verwaltungsbereichen gepflegt.
 
 Eine genaue Checkliste steht in [CONFIGURATION.md](CONFIGURATION.md). Solange rechtliche Kontaktdaten fehlen, zeigen Impressum und Datenschutzerklärung einen sichtbaren Einrichtungs-Hinweis statt leerer Felder.
 
@@ -124,11 +137,22 @@ Alle veränderlichen Daten liegen in:
 
 Beide Orte gehören nicht in Git und werden durch `.gitignore` ausgeschlossen. Für ein vollständiges Backup müssen beide gesichert werden. Der Linux-Installer erhält vorhandene Bild-Uploads bei einer Aktualisierung.
 
+Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php` prüft Neuinstallationen und Aktualisierungen, erstellt vor notwendigen Migrationen eine konsistente SQLite-Sicherung und bricht bei Integritätsfehlern ab. `Install/restore.php` stellt eine Sicherung geprüft wieder her und sichert zuvor nochmals den aktuell aktiven Datenbankstand.
+
 ## Projektstruktur
 
 ```text
 .
 ├── README.md
+├── ROADMAP.md
+├── tests/
+│   ├── smoke.php
+│   ├── migration.php
+│   ├── restore.php
+│   ├── event_lifecycle.php
+│   ├── scheduling.php
+│   ├── setup_wizard.php
+│   └── http_admin_setup.sh
 ├── INSTALL.md
 ├── CONFIGURATION.md
 ├── SECURITY.md
@@ -137,11 +161,25 @@ Beide Orte gehören nicht in Git und werden durch `.gitignore` ausgeschlossen. F
 ├── LICENSE
 ├── Install/
 │   ├── database_schema.sql
+│   ├── migration_lib.php
+│   ├── migrate.php
+│   ├── restore.php
+│   ├── reset_admin.php
+│   ├── migrations/
+│   │   ├── 001_baseline.sql
+│   │   ├── 002_secure_admin_setup.sql
+│   │   ├── 003_event_archives.sql
+│   │   └── 004_event_schedule_and_shift_fields.sql
 │   ├── install_helferliste.sh
 │   └── install_helferliste_windows.bat
 └── www/
+    ├── version.php
     ├── index.php
     ├── admin.php
+    ├── setup_wizard.php
+    ├── setup_wizard_lib.php
+    ├── event_archive.php
+    ├── shift_helpers.php
     ├── settings.php
     ├── weitere PHP-Dateien
     └── assets/
@@ -166,6 +204,8 @@ Fehlerberichte und Verbesserungen sind willkommen. Hinweise für Beiträge stehe
 ## MOWST
 
 Die Helferliste ist die erste veröffentlichte Referenz von MOWST. Mehr über die Digitale Werkstatt und weitere Projekte steht auf **[mowst.de](https://mowst.de)**. Direkter Kontakt: [hallo@mowst.de](mailto:hallo@mowst.de).
+
+Die geplanten Ausbaustufen stehen in der [Produkt-Roadmap](ROADMAP.md).
 
 ## Lizenz
 

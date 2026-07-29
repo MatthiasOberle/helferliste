@@ -13,7 +13,7 @@ jobs:
     name: PHP ${{ matrix.php }}
     strategy:
       matrix:
-        php: ["8.0", "8.3"]
+        php: ["8.3", "8.4", "8.5"]
 
     steps:
       - name: Repository laden
@@ -34,3 +34,24 @@ jobs:
 
       - name: Datenbankschema prüfen
         run: sqlite3 /tmp/helferliste-test.sqlite < Install/database_schema.sql
+
+      - name: Installation und Einstellungen prüfen
+        run: php tests/smoke.php
+
+      - name: Aktualisierung und Datenerhalt prüfen
+        run: php tests/migration.php
+
+      - name: Wiederherstellung prüfen
+        run: php tests/restore.php
+
+      - name: Veranstaltungsabschluss prüfen
+        run: php tests/event_lifecycle.php
+
+      - name: Zeitraum, Status und Schichtfelder prüfen
+        run: php tests/scheduling.php
+
+      - name: Geführte Ersteinrichtung prüfen
+        run: php tests/setup_wizard.php
+
+      - name: Sichere Admin-Ersteinrichtung prüfen
+        run: bash tests/http_admin_setup.sh

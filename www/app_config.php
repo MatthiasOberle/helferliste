@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/version.php';
+
 // Zentrale Projekt-Einstellungen. Fehlende Werte werden automatisch mit sinnvollen Standardwerten belegt.
 function ensureAppSettings(PDO $db): void {
     $db->exec("CREATE TABLE IF NOT EXISTS app_settings (
@@ -16,6 +18,10 @@ function appDefaults(): array {
         'app_name' => 'Helferliste',
         'event_organizer' => 'Meine Organisation',
         'event_name' => 'Meine Veranstaltung',
+        'event_start_date' => '',
+        'event_end_date' => '',
+        'event_status' => 'published',
+        'setup_wizard_completed' => '0',
         'public_base_url' => '',
         'public_login_info_text' => '',
         'hero_image' => 'assets/hlf20.png',
@@ -35,6 +41,8 @@ function appDefaults(): array {
         'occupancy_color_high' => '#b00020',
         'occupancy_color_full' => '#b00020',
         'text_login_heading' => 'Rückmeldung eintragen',
+        'text_event_draft_notice' => 'Diese Helferliste ist noch nicht freigegeben.',
+        'text_event_closed_notice' => 'Die Rückmeldung für diese Veranstaltung ist beendet.',
         'text_login_intro' => 'Bitte gib zuerst deinen persönlichen vierstelligen Code aus der Einladung ein.',
         'text_code_label' => 'Dein Zugangscode',
         'text_code_help' => 'Den Code findest du in der Einladung. Danach kannst du dich eintragen.',
@@ -127,6 +135,7 @@ function saveAppSetting(PDO $db, string $key, string $value): void {
 }
 
 function appConfig(PDO $db): array {
+    helferlisteRequireCurrentSchema($db);
     $config = [];
     foreach (appDefaults() as $key => $fallback) {
         $config[$key] = appSetting($db, $key, $fallback);
@@ -177,6 +186,77 @@ function appSubtitle(array $config): string {
         trim((string)($config['event_name'] ?? '')),
     ], fn($value) => $value !== '');
     return implode(' · ', $parts);
+}
+
+function appEventStatus(array $config): string {
+    $status = (string)($config['event_status'] ?? appDefaults()['event_status']);
+    return in_array($status, ['draft', 'published', 'closed'], true) ? $status : 'draft';
+}
+
+function appEventStatusLabel(array $config): string {
+    return match (appEventStatus($config)) {
+        'published' => 'Veröffentlicht',
+        'closed' => 'Abgeschlossen',
+        default => 'Entwurf',
+    };
+}
+
+function appEventAcceptsResponses(array $config): bool {
+    return appEventStatus($config) === 'published';
+}
+
+function appSetupWizardCompleted(array $config): bool {
+    return (string)($config['setup_wizard_completed'] ?? '0') === '1';
+}
+
+function appEventDateRange(array $config): string {
+    require_once __DIR__ . '/shift_helpers.php';
+    $start = trim((string)($config['event_start_date'] ?? ''));
+    $end = trim((string)($config['event_end_date'] ?? ''));
+    if ($start === '') {
+        return '';
+    }
+    if ($end === '' || $end === $start) {
+        return formatGermanDate($start);
+    }
+    return formatGermanDate($start) . '–' . formatGermanDate($end);
+}
+
+function appPublicationIssues(PDO $db, array $config): array {
+    $issues = [];
+    $eventName = trim((string)($config['event_name'] ?? ''));
+    $organizer = trim((string)($config['event_organizer'] ?? ''));
+    $baseUrl = trim((string)($config['public_base_url'] ?? ''));
+    $startDate = trim((string)($config['event_start_date'] ?? ''));
+
+    if ($eventName === '' || $eventName === appDefaults()['event_name']) {
+        $issues[] = 'einen konkreten Veranstaltungsnamen';
+    }
+    if ($organizer === '' || $organizer === appDefaults()['event_organizer']) {
+        $issues[] = 'die verantwortliche Organisation';
+    }
+    if ($startDate === '') {
+        $issues[] = 'den Veranstaltungsbeginn';
+    }
+    if ($baseUrl === '' || !filter_var($baseUrl, FILTER_VALIDATE_URL) || !preg_match('#^https?://#i', $baseUrl)) {
+        $issues[] = 'eine gültige öffentliche Basis-URL';
+    }
+    if (trim((string)($config['imprint_name'] ?? '')) === ''
+        || trim((string)($config['imprint_address'] ?? '')) === ''
+        || !filter_var((string)($config['imprint_email'] ?? ''), FILTER_VALIDATE_EMAIL)) {
+        $issues[] = 'vollständige Impressumsangaben';
+    }
+    if (!filter_var((string)($config['privacy_contact_email'] ?? ''), FILTER_VALIDATE_EMAIL)) {
+        $issues[] = 'eine gültige Datenschutz-Kontaktadresse';
+    }
+
+    $activeShifts = (int)$db->query("SELECT
+        (SELECT COUNT(*) FROM shifts WHERE active = 1 AND title NOT LIKE 'Beispiel:%')
+        + (SELECT COUNT(*) FROM springer_shifts WHERE active = 1 AND title NOT LIKE 'Beispiel:%')")->fetchColumn();
+    if ($activeShifts === 0) {
+        $issues[] = 'mindestens eine aktive Schicht';
+    }
+    return $issues;
 }
 
 function appPublicBaseUrl(PDO $db): string {
@@ -302,11 +382,12 @@ function adminNav(string $active = ''): void {
             'export.php' => ['Export', 'export'],
         ],
         'System' => [
+            'setup_wizard.php' => ['Einrichtungsassistent', 'setup'],
             'settings.php' => ['Einstellungen', 'settings'],
             'settings.php#kopfbild' => ['Kopfbild & Galerie', 'media'],
             'settings.php#design' => ['Design', 'design'],
             'settings.php#texte' => ['Seitentexte', 'texts'],
-            'clear_event.php' => ['Eventdaten löschen', 'clear'],
+            'event_archive.php' => ['Veranstaltung abschließen', 'archive'],
             'admin.php?change_password=1' => ['Passwort ändern', 'password'],
             'admin.php?logout=1' => ['Logout', 'logout'],
         ],
@@ -476,6 +557,7 @@ $adminViewScripts = [
     'edit_entry.php',
     'settings.php',
     'clear_event.php',
+    'event_archive.php',
 ];
 if (in_array(basename((string)($_SERVER['SCRIPT_NAME'] ?? '')), $adminViewScripts, true)) {
     adminViewPreference();

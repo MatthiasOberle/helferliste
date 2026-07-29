@@ -8,6 +8,7 @@ $db = new PDO('sqlite:' . __DIR__ . '/../data/helferliste.sqlite');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 require_once __DIR__ . '/app_config.php';
+require_once __DIR__ . '/shift_helpers.php';
 $appConfig = appConfig($db);
 
 require_once __DIR__ . '/tracking.php';
@@ -141,7 +142,7 @@ function bar(string $label, int $value, int $total, string $class = ''): string 
                 $used = countAssignments($db, 'entry_shifts', 'shift_id', (int)$shift['id']);
                 $max = max(1, (int)$shift['max_slots']);
             ?>
-            <?= bar((string)$shift['title'], $used, $max, occupancyClass($used, $max)) ?>
+            <?= bar(shiftDisplayLabel($shift), $used, $max, occupancyClass($used, $max)) ?>
         <?php endforeach; ?>
     </div>
 
@@ -152,7 +153,7 @@ function bar(string $label, int $value, int $total, string $class = ''): string 
                 $used = countAssignments($db, 'entry_springer_shifts', 'springer_shift_id', (int)$shift['id']);
                 $max = max(1, (int)$shift['max_slots']);
             ?>
-            <?= bar((string)$shift['title'], $used, $max, occupancyClass($used, $max)) ?>
+            <?= bar(shiftDisplayLabel($shift), $used, $max, occupancyClass($used, $max)) ?>
         <?php endforeach; ?>
     </div>
 
