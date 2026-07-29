@@ -2,6 +2,25 @@
 
 declare(strict_types=1);
 
+function helferlisteBeginImmediateTransaction(PDO $db): void
+{
+    $db->exec('BEGIN IMMEDIATE TRANSACTION');
+}
+
+function helferlisteCommitTransaction(PDO $db): void
+{
+    $db->exec('COMMIT');
+}
+
+function helferlisteRollbackTransaction(PDO $db): void
+{
+    try {
+        $db->exec('ROLLBACK');
+    } catch (Throwable) {
+        // Die ursprüngliche Ausnahme bleibt maßgeblich, auch wenn kein Rollback mehr möglich ist.
+    }
+}
+
 function helferlisteAssertDatabaseIntegrity(PDO $db): void
 {
     $quickCheck = (string)$db->query('PRAGMA quick_check')->fetchColumn();

@@ -201,7 +201,7 @@ function helferlisteResetAdminAccess(string $databaseFile, ?string $backupDirect
         'helferliste-vor-admin-reset-' . date('Ymd-His')
     );
 
-    $db->exec('BEGIN IMMEDIATE TRANSACTION');
+    helferlisteBeginImmediateTransaction($db);
     try {
         $stmt = $db->prepare('DELETE FROM app_settings WHERE setting_key IN (?, ?, ?, ?)');
         $stmt->execute(['admin_password_hash', 'admin_setup_token_hash', 'admin_setup_created_at', 'admin_auth_generation']);
@@ -209,11 +209,9 @@ function helferlisteResetAdminAccess(string $databaseFile, ?string $backupDirect
         if ($setupToken === null) {
             throw new RuntimeException('Neuer Einrichtungscode konnte nicht erzeugt werden.');
         }
-        $db->commit();
+        helferlisteCommitTransaction($db);
     } catch (Throwable $error) {
-        if ($db->inTransaction()) {
-            $db->rollBack();
-        }
+        helferlisteRollbackTransaction($db);
         throw $error;
     }
 
@@ -265,15 +263,13 @@ function helferlisteMigrateDatabase(string $databaseFile, ?string $backupDirecto
                     $fromVersion
                 )
                 : null;
-            $db->exec('BEGIN IMMEDIATE TRANSACTION');
+            helferlisteBeginImmediateTransaction($db);
             try {
                 $setupToken = helferlisteCreateAdminSetupToken($db);
                 helferlisteEnsureAdminAuthGeneration($db);
-                $db->commit();
+                helferlisteCommitTransaction($db);
             } catch (Throwable $error) {
-                if ($db->inTransaction()) {
-                    $db->rollBack();
-                }
+                helferlisteRollbackTransaction($db);
                 throw $error;
             }
             helferlisteAssertDatabaseIntegrity($db);
@@ -307,7 +303,7 @@ function helferlisteMigrateDatabase(string $databaseFile, ?string $backupDirecto
     }
 
     $setupToken = null;
-    $db->exec('BEGIN IMMEDIATE TRANSACTION');
+    helferlisteBeginImmediateTransaction($db);
     try {
         $db->exec("CREATE TABLE IF NOT EXISTS schema_migrations (
             version INTEGER PRIMARY KEY,
@@ -334,11 +330,9 @@ function helferlisteMigrateDatabase(string $databaseFile, ?string $backupDirecto
             $initialSetting->execute(['setup_wizard_completed', '0']);
         }
 
-        $db->commit();
+        helferlisteCommitTransaction($db);
     } catch (Throwable $error) {
-        if ($db->inTransaction()) {
-            $db->rollBack();
-        }
+        helferlisteRollbackTransaction($db);
         throw $error;
     }
 

@@ -187,7 +187,7 @@ function archiveAndStartNextEvent(PDO $db, string $databaseFile, string $backupD
         'helferliste-vor-abschluss-' . substr($safeEventName, 0, 48) . '-' . date('Ymd-His')
     );
 
-    $db->exec('BEGIN IMMEDIATE TRANSACTION');
+    helferlisteBeginImmediateTransaction($db);
     try {
         $stmt = $db->prepare("INSERT INTO event_archives
             (event_name, event_organizer, closed_at, summary_json, template_json, personal_data_json, includes_personal_data)
@@ -217,11 +217,9 @@ function archiveAndStartNextEvent(PDO $db, string $databaseFile, string $backupD
         saveAppSetting($db, 'setup_wizard_completed', '0');
         $logStmt = $db->prepare("INSERT INTO event_log (created_at, action, detail) VALUES (datetime('now'), 'event_started', ?)");
         $logStmt->execute(['Neue Veranstaltung gestartet: ' . $nextEventName . '. Archiv #' . $archiveId . '.']);
-        $db->commit();
+        helferlisteCommitTransaction($db);
     } catch (Throwable $error) {
-        if ($db->inTransaction()) {
-            $db->rollBack();
-        }
+        helferlisteRollbackTransaction($db);
         throw $error;
     }
 
@@ -281,7 +279,7 @@ function startEventFromArchiveTemplate(
         'helferliste-vor-vorlage-' . $archiveId . '-' . date('Ymd-His')
     );
 
-    $db->exec('BEGIN IMMEDIATE TRANSACTION');
+    helferlisteBeginImmediateTransaction($db);
     try {
         $db->exec('DELETE FROM springer_shifts');
         $db->exec('DELETE FROM shifts');
@@ -336,11 +334,9 @@ function startEventFromArchiveTemplate(
         saveAppSetting($db, 'setup_wizard_completed', '0');
         $logStmt = $db->prepare("INSERT INTO event_log (created_at, action, detail) VALUES (datetime('now'), 'archive_template_applied', ?)");
         $logStmt->execute(['Vorlage aus Archiv #' . $archiveId . ' (' . (string)$archive['event_name'] . ') übernommen.']);
-        $db->commit();
+        helferlisteCommitTransaction($db);
     } catch (Throwable $error) {
-        if ($db->inTransaction()) {
-            $db->rollBack();
-        }
+        helferlisteRollbackTransaction($db);
         throw $error;
     }
 
