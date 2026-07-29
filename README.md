@@ -8,6 +8,12 @@ Entwickelt und gepflegt von **[MOWST — Digitale Werkstatt](https://mowst.de)**
 
 Helfer benötigen kein Benutzerkonto und keine App. Ein persönlicher vierstelliger Code oder Direktlink genügt. Die Anwendung benötigt weder Framework noch Composer oder Node.js: PHP 8.x und SQLite reichen aus.
 
+## Woran ich gerade arbeite
+
+Die Helferliste ist kein abgeschlossenes Archivprojekt. Ich entwickle sie Schritt für Schritt zu einem Werkzeug weiter, das sich auch außerhalb der Feuerwehr einfach einsetzen lässt.
+
+Im aktuellen Entwicklungszweig sind bereits eine geführte Ersteinrichtung, sichere Datenbankaktualisierungen, Veranstaltungsarchive sowie deutlich flexiblere Schichten hinzugekommen. Neue Funktionen werden dort zuerst praktisch getestet und laufen automatisch unter PHP 8.3, 8.4 und 8.5 durch. Der Hauptzweig bleibt der ruhige, stabile Stand für veröffentlichte Versionen.
+
 ## Einblicke
 
 Alle abgebildeten Namen, E-Mail-Adressen, Codes und Veranstaltungsangaben sind frei erfundene Testdaten.
