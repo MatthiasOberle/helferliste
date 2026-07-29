@@ -29,7 +29,7 @@ grep -q 'Sichere Ersteinrichtung' "${test_root}/setup.html"
 csrf_token="$(sed -n 's/.*name="csrf_token" value="\([^"]*\)".*/\1/p' "${test_root}/setup.html" | head -n 1)"
 [[ -n "${csrf_token}" ]]
 
-setup_post_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/setup-post.html" -w '%{http_code}' \
+setup_post_status="$(curl -sS -D "${test_root}/setup-post-headers.txt" -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/setup-post.html" -w '%{http_code}' \
   --data-urlencode "csrf_token=${csrf_token}" \
   --data-urlencode 'action=complete_setup' \
   --data-urlencode "setup_token=${setup_token}" \
@@ -37,25 +37,85 @@ setup_post_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/coo
   --data-urlencode "repeat_password=${test_password}" \
   "http://127.0.0.1:${test_port}/admin.php")"
 [[ "${setup_post_status}" == "302" ]]
+grep -qi '^Location: setup_wizard.php' "${test_root}/setup-post-headers.txt"
+
+wizard_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/wizard-event.html" -w '%{http_code}' "http://127.0.0.1:${test_port}/setup_wizard.php")"
+[[ "${wizard_status}" == "200" ]]
+grep -q '1. Veranstaltung' "${test_root}/wizard-event.html"
+wizard_csrf="$(sed -n 's/.*name="csrf_token" value="\([^"]*\)".*/\1/p' "${test_root}/wizard-event.html" | head -n 1)"
+[[ -n "${wizard_csrf}" ]]
+
+event_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o /dev/null -w '%{http_code}' \
+  --data-urlencode "csrf_token=${wizard_csrf}" \
+  --data-urlencode 'action=save_event' \
+  --data-urlencode 'app_name=HTTP Helferliste' \
+  --data-urlencode 'event_organizer=HTTP Beispielverein' \
+  --data-urlencode 'event_name=HTTP Testfest 2026' \
+  --data-urlencode 'event_start_date=2026-07-10' \
+  --data-urlencode 'event_end_date=2026-07-12' \
+  "http://127.0.0.1:${test_port}/setup_wizard.php?step=1")"
+[[ "${event_status}" == "302" ]]
+
+curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/wizard-legal.html" "http://127.0.0.1:${test_port}/setup_wizard.php?step=2"
+legal_csrf="$(sed -n 's/.*name="csrf_token" value="\([^"]*\)".*/\1/p' "${test_root}/wizard-legal.html" | head -n 1)"
+[[ -n "${legal_csrf}" ]]
+legal_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o /dev/null -w '%{http_code}' \
+  --data-urlencode "csrf_token=${legal_csrf}" \
+  --data-urlencode 'action=save_legal' \
+  --data-urlencode "public_base_url=http://127.0.0.1:${test_port}" \
+  --data-urlencode 'imprint_name=HTTP Beispielverein' \
+  --data-urlencode 'imprint_address=Musterweg 1, 12345 Musterstadt' \
+  --data-urlencode 'imprint_email=kontakt@example.org' \
+  --data-urlencode 'privacy_contact_email=datenschutz@example.org' \
+  "http://127.0.0.1:${test_port}/setup_wizard.php?step=2")"
+[[ "${legal_status}" == "302" ]]
+
+curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/wizard-shift.html" "http://127.0.0.1:${test_port}/setup_wizard.php?step=3"
+shift_wizard_csrf="$(sed -n 's/.*name="csrf_token" value="\([^"]*\)".*/\1/p' "${test_root}/wizard-shift.html" | head -n 1)"
+[[ -n "${shift_wizard_csrf}" ]]
+shift_wizard_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o /dev/null -w '%{http_code}' \
+  --data-urlencode "csrf_token=${shift_wizard_csrf}" \
+  --data-urlencode 'action=create_shift' \
+  --data-urlencode 'type=normal' \
+  --data-urlencode 'title=Aufbau' \
+  --data-urlencode 'shift_date=2026-07-10' \
+  --data-urlencode 'start_time=16:00' \
+  --data-urlencode 'end_time=20:00' \
+  --data-urlencode 'location=Festplatz' \
+  --data-urlencode 'note=Handschuhe mitbringen' \
+  --data-urlencode 'max_slots=8' \
+  "http://127.0.0.1:${test_port}/setup_wizard.php?step=3")"
+[[ "${shift_wizard_status}" == "302" ]]
+
+curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/wizard-review.html" "http://127.0.0.1:${test_port}/setup_wizard.php?step=4"
+grep -q '4. Einrichtung prüfen' "${test_root}/wizard-review.html"
+review_csrf="$(sed -n 's/.*name="csrf_token" value="\([^"]*\)".*/\1/p' "${test_root}/wizard-review.html" | head -n 1)"
+[[ -n "${review_csrf}" ]]
+finish_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o /dev/null -w '%{http_code}' \
+  --data-urlencode "csrf_token=${review_csrf}" \
+  --data-urlencode 'action=finish' \
+  --data-urlencode 'event_status=draft' \
+  "http://127.0.0.1:${test_port}/setup_wizard.php?step=4")"
+[[ "${finish_status}" == "302" ]]
 
 admin_status="$(curl -sS -b "${test_root}/cookies.txt" -o "${test_root}/admin.html" -w '%{http_code}' "http://127.0.0.1:${test_port}/admin.php")"
 [[ "${admin_status}" == "200" ]]
 grep -q 'Adminbereich' "${test_root}/admin.html"
+grep -q 'Einrichtung ist abgeschlossen' "${test_root}/admin.html"
 
 database_file="${test_root}/data/helferliste.sqlite"
 [[ "$(sqlite3 "${database_file}" "SELECT COUNT(*) FROM app_settings WHERE setting_key='admin_setup_token_hash';")" == "0" ]]
 [[ "$(sqlite3 "${database_file}" "SELECT COUNT(*) FROM app_settings WHERE setting_key='admin_password_hash';")" == "1" ]]
 [[ "$(sqlite3 "${database_file}" "SELECT COUNT(*) FROM app_settings WHERE setting_key='admin_auth_generation';")" == "1" ]]
+[[ "$(sqlite3 "${database_file}" "SELECT setting_value FROM app_settings WHERE setting_key='setup_wizard_completed';")" == "1" ]]
+shift_id="$(sqlite3 "${database_file}" "SELECT id FROM shifts WHERE active=1 AND title='Aufbau' ORDER BY id DESC LIMIT 1;")"
+[[ -n "${shift_id}" ]]
 
 sqlite3 "${database_file}" "
-  INSERT OR REPLACE INTO app_settings (setting_key, setting_value, updated_at) VALUES ('event_name', 'HTTP Testfest 2026', datetime('now'));
-  INSERT OR REPLACE INTO app_settings (setting_key, setting_value, updated_at) VALUES ('event_organizer', 'HTTP Beispielverein', datetime('now'));
-  INSERT OR REPLACE INTO app_settings (setting_key, setting_value, updated_at) VALUES ('event_start_date', '2026-07-10', datetime('now'));
-  INSERT OR REPLACE INTO app_settings (setting_key, setting_value, updated_at) VALUES ('event_end_date', '2026-07-12', datetime('now'));
   INSERT OR REPLACE INTO app_settings (setting_key, setting_value, updated_at) VALUES ('event_status', 'published', datetime('now'));
   INSERT INTO access_codes (email, code, created_at) VALUES ('http@example.org', '7171', datetime('now'));
   INSERT INTO entries (name, status, note, created_at, access_code_id) VALUES ('HTTP Beispiel', 'help', 'Testhinweis', datetime('now'), last_insert_rowid());
-  INSERT INTO entry_shifts (entry_id, shift_id) VALUES (last_insert_rowid(), 1);
+  INSERT INTO entry_shifts (entry_id, shift_id) VALUES (last_insert_rowid(), ${shift_id});
 "
 
 shifts_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/shifts.html" -w '%{http_code}' "http://127.0.0.1:${test_port}/edit_shifts.php")"
@@ -66,7 +126,7 @@ shift_post_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/coo
   --data-urlencode "csrf_token=${shifts_csrf}" \
   --data-urlencode 'action=update' \
   --data-urlencode 'type=normal' \
-  --data-urlencode 'id=1' \
+  --data-urlencode "id=${shift_id}" \
   --data-urlencode 'title=Aufbau' \
   --data-urlencode 'shift_date=2026-07-10' \
   --data-urlencode 'start_time=16:00' \
@@ -78,7 +138,7 @@ shift_post_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/coo
   "http://127.0.0.1:${test_port}/edit_shifts.php")"
 [[ "${shift_post_status}" == "200" ]]
 grep -q 'Schicht wurde gespeichert' "${test_root}/shift-post.html"
-[[ "$(sqlite3 "${database_file}" "SELECT shift_date || '|' || start_time || '|' || location FROM shifts WHERE id=1;")" == "2026-07-10|16:00|Festplatz" ]]
+[[ "$(sqlite3 "${database_file}" "SELECT shift_date || '|' || start_time || '|' || location FROM shifts WHERE id=${shift_id};")" == "2026-07-10|16:00|Festplatz" ]]
 
 archive_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/archive.html" -w '%{http_code}' "http://127.0.0.1:${test_port}/event_archive.php")"
 [[ "${archive_status}" == "200" ]]
@@ -135,4 +195,4 @@ after_reset_status="$(curl -sS -b "${test_root}/cookies.txt" -o "${test_root}/af
 [[ "${after_reset_status}" == "200" ]]
 grep -q 'Sichere Ersteinrichtung' "${test_root}/after-reset.html"
 
-echo 'OK: Admin-Ersteinrichtung, Veranstaltungsabschluss, öffentliche Seite, Export, Reset und Sitzungsentzug funktionieren.'
+echo 'OK: Adminzugang, Einrichtungsassistent, Veranstaltungsabschluss, öffentliche Seite, Export, Reset und Sitzungsentzug funktionieren.'

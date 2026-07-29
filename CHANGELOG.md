@@ -13,7 +13,9 @@ Alle wichtigen Änderungen dieses Projekts werden hier dokumentiert.
 - Linux- und Windows-Installer auf den gemeinsamen Migrationsmechanismus umgestellt
 - allgemein bekanntes Standardpasswort durch einmaligen, zufälligen Einrichtungscode ersetzt
 - Mindestlänge für neue Admin-Passwörter auf 12 Zeichen angehoben
-- Entwicklungsstand auf `1.3.0-dev` und Datenbankschema 4 angehoben
+- Entwicklungsstand auf `1.4.0-dev` bei unverändertem Datenbankschema 4 angehoben
+- Beispielschichten von der Veröffentlichungsbereitschaft ausgeschlossen
+- neue Installationen bis zum Abschluss des Einrichtungsassistenten sicher im Entwurf gestartet
 
 ### Ergänzt
 
@@ -34,6 +36,9 @@ Alle wichtigen Änderungen dieses Projekts werden hier dokumentiert.
 - strukturierte Schichtfelder für Datum, Beginn, Ende, Ort, Kapazität und öffentlichen Hinweis ergänzt
 - Schichten duplizierbar gemacht und beide Schichtkategorien im Adminbereich frei benennbar dargestellt
 - Archiv, Vorlagen, Statistik und Exporte um strukturierte Schichtangaben erweitert
+- vierstufigen Einrichtungsassistenten für Veranstaltung, Pflichtangaben, erste Schicht und Freigabe ergänzt
+- automatisches Deaktivieren unbenutzter Beispielschichten beim Anlegen der ersten konkreten Schicht ergänzt
+- automatisierten Funktions- und HTTP-Test für den vollständigen Einrichtungsassistenten ergänzt
 
 ## 1.0.1 – 2026-07-27
 

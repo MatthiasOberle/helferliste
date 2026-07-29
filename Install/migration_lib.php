@@ -327,6 +327,13 @@ function helferlisteMigrateDatabase(string $databaseFile, ?string $backupDirecto
             $stmt->execute([$version, HELFERLISTE_VERSION]);
         }
 
+        if (!$hadExistingData) {
+            $initialSetting = $db->prepare("INSERT OR REPLACE INTO app_settings
+                (setting_key, setting_value, updated_at) VALUES (?, ?, datetime('now'))");
+            $initialSetting->execute(['event_status', 'draft']);
+            $initialSetting->execute(['setup_wizard_completed', '0']);
+        }
+
         $db->commit();
     } catch (Throwable $error) {
         if ($db->inTransaction()) {

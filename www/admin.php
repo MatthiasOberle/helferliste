@@ -152,6 +152,12 @@ function fillPercent(int $used, int $max): int {
 
 $message = '';
 $error = '';
+$setupWizardCompleted = appSetupWizardCompleted($appConfig);
+$setupWizardIssues = appPublicationIssues($db, $appConfig);
+if (isset($_SESSION['admin_flash'])) {
+    $message = (string)$_SESSION['admin_flash'];
+    unset($_SESSION['admin_flash']);
+}
 $showPasswordForm = isset($_GET['change_password']);
 
 if (isset($_GET['logout'])) {
@@ -368,6 +374,19 @@ $openRequests = (int)$db->query("SELECT COUNT(*) FROM change_requests WHERE stat
 
     <?php if ($message !== ''): ?><div class="notice success"><?= h($message) ?></div><?php endif; ?>
     <?php if ($error !== ''): ?><div class="notice error"><?= h($error) ?></div><?php endif; ?>
+
+    <?php if (!$setupWizardCompleted): ?>
+        <div class="card">
+            <h2>Einrichtung gemeinsam abschließen</h2>
+            <p>Der neue Assistent führt durch Veranstaltung, Pflichtangaben, erste Schicht und Veröffentlichung.</p>
+            <?php if ($setupWizardIssues !== []): ?>
+                <p class="muted">Noch offen: <?= h(implode(', ', $setupWizardIssues)) ?>.</p>
+            <?php else: ?>
+                <p class="muted">Die notwendigen Angaben sind vorhanden. Der Assistent kann sie prüfen und den Einrichtungsstand bestätigen.</p>
+            <?php endif; ?>
+            <div class="buttons"><a class="btn" href="setup_wizard.php">Einrichtungsassistent starten</a></div>
+        </div>
+    <?php endif; ?>
 
 
     <?php if ($showPasswordForm): ?>

@@ -76,6 +76,8 @@ try {
     migrationAssert('Erika Beispiel', (string)$migratedDb->query('SELECT name FROM entries LIMIT 1')->fetchColumn(), 'Vorhandene Rückmeldung ging verloren.');
     migrationAssert('4242', (string)$migratedDb->query('SELECT code FROM access_codes LIMIT 1')->fetchColumn(), 'Vorhandener Zugangscode ging verloren.');
     migrationAssert('Testfest', (string)$migratedDb->query("SELECT setting_value FROM app_settings WHERE setting_key = 'event_name'")->fetchColumn(), 'Vorhandene Einstellung ging verloren.');
+    require_once $projectRoot . '/www/app_config.php';
+    migrationAssert('published', appConfig($migratedDb)['event_status'], 'Bestehende Installation wurde bei der Aktualisierung unerwartet gesperrt.');
     migrationAssert($existingPasswordHash, (string)$migratedDb->query("SELECT setting_value FROM app_settings WHERE setting_key = 'admin_password_hash'")->fetchColumn(), 'Vorhandenes Admin-Passwort wurde verändert.');
     migrationAssert(1, (int)$migratedDb->query("SELECT COUNT(*) FROM app_settings WHERE setting_key = 'admin_auth_generation' AND setting_value <> ''")->fetchColumn(), 'Vorhandener Adminzugang erhielt keine Sitzungs-Generation.');
     migrationAssert(1, (int)$migratedDb->query("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'event_archives'")->fetchColumn(), 'Archiv-Tabelle wurde durch die Migration nicht angelegt.');

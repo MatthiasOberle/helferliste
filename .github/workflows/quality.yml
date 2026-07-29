@@ -50,5 +50,8 @@ jobs:
       - name: Zeitraum, Status und Schichtfelder prüfen
         run: php tests/scheduling.php
 
+      - name: Geführte Ersteinrichtung prüfen
+        run: php tests/setup_wizard.php
+
       - name: Sichere Admin-Ersteinrichtung prüfen
         run: bash tests/http_admin_setup.sh

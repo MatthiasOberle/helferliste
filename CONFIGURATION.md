@@ -8,6 +8,8 @@ Die technische Herstellerangabe verweist auf **[MOWST — Digitale Werkstatt](ht
 
 Beim ersten Aufruf von `admin.php` den einmaligen Einrichtungscode aus dem Installer verwenden und ein nur hier verwendetes Admin-Passwort mit mindestens 12 Zeichen festlegen. Der Code wird nach erfolgreicher Einrichtung ungültig. Den Adminbereich anschließend nur berechtigten Personen zugänglich machen.
 
+Bei einer neuen Installation öffnet sich anschließend automatisch der Einrichtungsassistent. Er kann jederzeit über `System → Einrichtungsassistent` erneut geöffnet werden. Bestehende Installationen werden nicht zwangsweise umgestellt, sondern erhalten im Adminbereich einen sichtbaren Einstieg.
+
 ## 2. Allgemeine Angaben
 
 Unter `System → Einstellungen` ausfüllen:
@@ -62,7 +64,7 @@ Im Bereich `Seitentexte` alle Überschriften, Hilfetexte, Feldnamen und Schaltfl
 
 ## 6. Schichten
 
-Die mitgelieferten Schichten sind nur Beispiele. Vor dem Echtbetrieb:
+Die mitgelieferten Schichten sind nur Beispiele und zählen nicht als veröffentlichungsfertige Planung. Der Assistent deaktiviert unbenutzte Beispiele automatisch, sobald die erste konkrete Schicht angelegt wird. Vor dem Echtbetrieb:
 
 1. Beispiele bearbeiten oder löschen.
 2. verständlichen Titel vergeben.

@@ -68,7 +68,7 @@ function eventTemplate(PDO $db): array
 {
     $settings = [];
     foreach (appDefaults() as $key => $fallback) {
-        if (!in_array($key, ['event_name', 'event_start_date', 'event_end_date', 'event_status'], true)) {
+        if (!in_array($key, ['event_name', 'event_start_date', 'event_end_date', 'event_status', 'setup_wizard_completed'], true)) {
             $settings[$key] = appSetting($db, $key, (string)$fallback);
         }
     }
@@ -214,6 +214,7 @@ function archiveAndStartNextEvent(PDO $db, string $databaseFile, string $backupD
         saveAppSetting($db, 'event_start_date', $nextStartDate);
         saveAppSetting($db, 'event_end_date', $nextEndDate);
         saveAppSetting($db, 'event_status', 'draft');
+        saveAppSetting($db, 'setup_wizard_completed', '0');
         $logStmt = $db->prepare("INSERT INTO event_log (created_at, action, detail) VALUES (datetime('now'), 'event_started', ?)");
         $logStmt->execute(['Neue Veranstaltung gestartet: ' . $nextEventName . '. Archiv #' . $archiveId . '.']);
         $db->commit();
@@ -286,12 +287,12 @@ function startEventFromArchiveTemplate(
         $db->exec('DELETE FROM shifts');
         $deleteSetting = $db->prepare('DELETE FROM app_settings WHERE setting_key = ?');
         foreach (array_keys(appDefaults()) as $key) {
-            if (!in_array($key, ['event_name', 'event_start_date', 'event_end_date', 'event_status'], true)) {
+            if (!in_array($key, ['event_name', 'event_start_date', 'event_end_date', 'event_status', 'setup_wizard_completed'], true)) {
                 $deleteSetting->execute([$key]);
             }
         }
         foreach (($template['settings'] ?? []) as $key => $value) {
-            if (!in_array($key, ['event_name', 'event_start_date', 'event_end_date', 'event_status'], true) && array_key_exists($key, appDefaults())) {
+            if (!in_array($key, ['event_name', 'event_start_date', 'event_end_date', 'event_status', 'setup_wizard_completed'], true) && array_key_exists($key, appDefaults())) {
                 saveAppSetting($db, (string)$key, (string)$value);
             }
         }
@@ -332,6 +333,7 @@ function startEventFromArchiveTemplate(
         saveAppSetting($db, 'event_start_date', $eventStartDate);
         saveAppSetting($db, 'event_end_date', $eventEndDate);
         saveAppSetting($db, 'event_status', 'draft');
+        saveAppSetting($db, 'setup_wizard_completed', '0');
         $logStmt = $db->prepare("INSERT INTO event_log (created_at, action, detail) VALUES (datetime('now'), 'archive_template_applied', ?)");
         $logStmt->execute(['Vorlage aus Archiv #' . $archiveId . ' (' . (string)$archive['event_name'] . ') übernommen.']);
         $db->commit();

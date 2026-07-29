@@ -107,18 +107,18 @@ Kurzfassung für einen frischen Ubuntu-/Debian-Server:
 sudo bash Install/install_helferliste.sh
 ```
 
-Anschließend `https://DEINE-DOMAIN/admin.php` öffnen, den einmaligen Einrichtungscode aus dem Installer eingeben und ein eigenes Admin-Passwort festlegen.
+Anschließend `https://DEINE-DOMAIN/admin.php` öffnen, den einmaligen Einrichtungscode aus dem Installer eingeben und ein eigenes Admin-Passwort festlegen. Bei einer neuen Installation öffnet sich danach automatisch der vierstufige Einrichtungsassistent.
 
 ## Ersteinrichtung
 
-Die Git-Version enthält bewusst keine persönlichen Daten. Nach der Installation müssen folgende Angaben ergänzt werden:
+Die Git-Version enthält bewusst keine persönlichen Daten. Der Einrichtungsassistent führt ohne technisches Vorwissen durch:
 
-1. Admin-Passwort ändern.
-2. Organisation, Veranstaltung und öffentliche URL eintragen.
-3. Impressum und Datenschutzkontakt vervollständigen.
-4. Kopfbild, Farben und Seitentexte prüfen.
-5. Beispielschichten ersetzen.
-6. Zugangscodes für echte Helfer erzeugen.
+1. Organisation, Veranstaltung und Zeitraum.
+2. öffentliche URL, Impressum und Datenschutzkontakt.
+3. erste konkrete Schicht.
+4. Abschluss als geschützter Entwurf oder direkte Veröffentlichung.
+
+Mitgelieferte Schichten mit dem Präfix `Beispiel:` gelten nicht als veröffentlichungsfertig. Beim Anlegen der ersten echten Schicht deaktiviert der Assistent unbenutzte Beispiele. Kopfbild, Farben, Seitentexte und Zugangscodes werden anschließend in den normalen Verwaltungsbereichen gepflegt.
 
 Eine genaue Checkliste steht in [CONFIGURATION.md](CONFIGURATION.md). Solange rechtliche Kontaktdaten fehlen, zeigen Impressum und Datenschutzerklärung einen sichtbaren Einrichtungs-Hinweis statt leerer Felder.
 
@@ -145,6 +145,7 @@ Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php`
 │   ├── restore.php
 │   ├── event_lifecycle.php
 │   ├── scheduling.php
+│   ├── setup_wizard.php
 │   └── http_admin_setup.sh
 ├── INSTALL.md
 ├── CONFIGURATION.md
@@ -169,6 +170,8 @@ Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php`
     ├── version.php
     ├── index.php
     ├── admin.php
+    ├── setup_wizard.php
+    ├── setup_wizard_lib.php
     ├── event_archive.php
     ├── shift_helpers.php
     ├── settings.php

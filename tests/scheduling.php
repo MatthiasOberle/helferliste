@@ -62,6 +62,7 @@ try {
     $readyConfig['imprint_address'] = 'Musterweg 1, 12345 Musterstadt';
     $readyConfig['imprint_email'] = 'kontakt@example.org';
     $readyConfig['privacy_contact_email'] = 'datenschutz@example.org';
+    $db->exec("UPDATE shifts SET title = 'Aufbau Festhalle' WHERE id = 1");
     schedulingAssert([], appPublicationIssues($db, $readyConfig), 'Vollständige Konfiguration wurde nicht als veröffentlichungsbereit erkannt.');
 
     fwrite(STDOUT, "OK: Veranstaltungsstatus, Zeitraum und strukturierte Schichtfelder funktionieren.\n");

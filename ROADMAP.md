@@ -99,9 +99,10 @@ Abgeschlossen:
 - Veranstaltungszeitraum und Status mit öffentlicher Sperre für Entwurf und Abschluss umgesetzt
 - Freigabeprüfung vor Veröffentlichung ergänzt
 - strukturierte Schichtfelder und Duplizieren von Schichten umgesetzt
+- vierstufigen Einrichtungsassistenten für Veranstaltung, Pflichtangaben, erste Schicht und Freigabe umgesetzt
+- Beispielschichten aus der Veröffentlichungsbereitschaft ausgeschlossen und beim ersten echten Schichtaufbau sicher deaktiviert
 
 Als Nächstes:
 
-1. Geführte Ersteinrichtung über die bereits sichere Passwortvergabe hinaus ausbauen.
-2. CSV-Import für Kontakte umsetzen.
-3. Druckansichten für Schichtplan und Anwesenheitslisten ergänzen.
+1. CSV-Import für Kontakte umsetzen.
+2. Druckansichten für Schichtplan und Anwesenheitslisten ergänzen.

@@ -192,7 +192,10 @@ if (!$adminPasswordConfigured && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POS
         $_SESSION['admin_auth_generation'] = getAdminAuthGeneration();
         unset($_SESSION['admin_setup_attempts'], $_SESSION['admin_setup_locked_until']);
         csrfToken();
-        header('Location: admin.php');
+        $setupDestination = getSetting(adminDb(), 'setup_wizard_completed', '0') === '1'
+            ? 'admin.php'
+            : 'setup_wizard.php';
+        header('Location: ' . $setupDestination);
         exit;
     } else {
         $_SESSION['admin_setup_attempts'] = (int)($_SESSION['admin_setup_attempts'] ?? 0) + 1;

@@ -71,7 +71,8 @@ try {
     require_once $projectRoot . '/www/app_config.php';
     $defaults = appConfig($db);
     assertSameValue('Helferliste', $defaults['app_name'] ?? null, 'Standardkonfiguration ist nicht verfügbar.');
-    assertSameValue('published', $defaults['event_status'] ?? null, 'Bestehende Installationen müssen nach dem Update veröffentlicht bleiben.');
+    assertSameValue('draft', $defaults['event_status'] ?? null, 'Neue Installationen müssen bis zum Abschluss des Assistenten im Entwurf bleiben.');
+    assertSameValue('0', $defaults['setup_wizard_completed'] ?? null, 'Neue Installation wurde fälschlich als eingerichtet markiert.');
 
     saveAppSetting($db, 'event_organizer', 'Beispielverein');
     assertSameValue('Beispielverein', appSetting($db, 'event_organizer'), 'Einstellung konnte nicht gespeichert und gelesen werden.');

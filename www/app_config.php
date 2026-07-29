@@ -21,6 +21,7 @@ function appDefaults(): array {
         'event_start_date' => '',
         'event_end_date' => '',
         'event_status' => 'published',
+        'setup_wizard_completed' => '0',
         'public_base_url' => '',
         'public_login_info_text' => '',
         'hero_image' => 'assets/hlf20.png',
@@ -204,6 +205,10 @@ function appEventAcceptsResponses(array $config): bool {
     return appEventStatus($config) === 'published';
 }
 
+function appSetupWizardCompleted(array $config): bool {
+    return (string)($config['setup_wizard_completed'] ?? '0') === '1';
+}
+
 function appEventDateRange(array $config): string {
     require_once __DIR__ . '/shift_helpers.php';
     $start = trim((string)($config['event_start_date'] ?? ''));
@@ -245,7 +250,9 @@ function appPublicationIssues(PDO $db, array $config): array {
         $issues[] = 'eine gültige Datenschutz-Kontaktadresse';
     }
 
-    $activeShifts = (int)$db->query('SELECT (SELECT COUNT(*) FROM shifts WHERE active = 1) + (SELECT COUNT(*) FROM springer_shifts WHERE active = 1)')->fetchColumn();
+    $activeShifts = (int)$db->query("SELECT
+        (SELECT COUNT(*) FROM shifts WHERE active = 1 AND title NOT LIKE 'Beispiel:%')
+        + (SELECT COUNT(*) FROM springer_shifts WHERE active = 1 AND title NOT LIKE 'Beispiel:%')")->fetchColumn();
     if ($activeShifts === 0) {
         $issues[] = 'mindestens eine aktive Schicht';
     }
@@ -375,6 +382,7 @@ function adminNav(string $active = ''): void {
             'export.php' => ['Export', 'export'],
         ],
         'System' => [
+            'setup_wizard.php' => ['Einrichtungsassistent', 'setup'],
             'settings.php' => ['Einstellungen', 'settings'],
             'settings.php#kopfbild' => ['Kopfbild & Galerie', 'media'],
             'settings.php#design' => ['Design', 'design'],
