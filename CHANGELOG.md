@@ -13,7 +13,7 @@ Alle wichtigen Änderungen dieses Projekts werden hier dokumentiert.
 - Linux- und Windows-Installer auf den gemeinsamen Migrationsmechanismus umgestellt
 - allgemein bekanntes Standardpasswort durch einmaligen, zufälligen Einrichtungscode ersetzt
 - Mindestlänge für neue Admin-Passwörter auf 12 Zeichen angehoben
-- Entwicklungsstand auf `1.5.0-dev` bei unverändertem Datenbankschema 4 angehoben
+- Entwicklungsstand auf `1.6.0-dev` bei unverändertem Datenbankschema 4 angehoben
 - Beispielschichten von der Veröffentlichungsbereitschaft ausgeschlossen
 - neue Installationen bis zum Abschluss des Einrichtungsassistenten sicher im Entwurf gestartet
 - GitHub-Qualitätsprüfung auf `actions/checkout@v7` und damit die aktuelle Aktionslaufzeit umgestellt
@@ -43,6 +43,10 @@ Alle wichtigen Änderungen dieses Projekts werden hier dokumentiert.
 - CSV-Import für bis zu 1.000 Kontakte mit Vorschau, automatischer Trennzeichenerkennung und Dublettenprüfung ergänzt
 - atomische Code-Erzeugung für eingefügte und importierte E-Mail-Adressen ergänzt
 - automatisierten Test für CSV-Auswertung, Zeichencodierung, Dubletten und Import ergänzt
+- druckoptimierten Schichtplan mit Zeiten, Orten, Kapazitäten und eingeteilten Namen ergänzt
+- getrennte Anwesenheitsliste je aktiver Schicht mit Papierfeldern für Anwesenheit, Beginn, Ende und Bemerkung ergänzt
+- E-Mail-Adressen, Zugangscodes und private Hinweise aus den Drucklisten ausgeschlossen
+- automatisierte Funktions- und HTTP-Tests für Druckdaten, Datenschutzgrenzen und Druckansichten ergänzt
 
 ## 1.0.1 – 2026-07-27
 

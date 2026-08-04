@@ -414,6 +414,7 @@ $openRequests = (int)$db->query("SELECT COUNT(*) FROM change_requests WHERE stat
             <a class="btn secondary" href="codes.php">Zugangscodes verwalten</a>
             <a class="btn secondary" href="edit_shifts.php">Schichten bearbeiten</a>
             <a class="btn secondary" href="export.php">Export öffnen</a>
+            <a class="btn secondary" href="print_lists.php">Drucklisten öffnen</a>
             <a class="btn secondary" href="settings.php">Einstellungen öffnen</a>
         </div>
     </div>

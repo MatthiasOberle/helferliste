@@ -98,7 +98,18 @@ Vor dem Versand:
 - Änderungswunsch testen
 - Export kontrollieren
 
-## 8. Betrieb und Veranstaltungsende
+## 8. Schichtplan und Anwesenheitslisten drucken
+
+Unter `Auswertung → Drucklisten` stehen zwei Ansichten bereit:
+
+- Der **Schichtplan** fasst alle aktiven normalen und flexiblen Schichten mit Datum, Uhrzeit, Ort, Kapazität und den eingeteilten Namen zusammen.
+- Die **Anwesenheitslisten** erzeugen je aktiver Schicht eine eigene Seite. Neben den eingeteilten Namen gibt es Papierfelder für Anwesenheit, Beginn, Ende und Bemerkung sowie bis zu drei freie Zeilen für kurzfristige Ergänzungen.
+
+Mit `Jetzt drucken` öffnet sich die Druckvorschau des Browsers. Dort kann die Ausgabe gedruckt oder als PDF gespeichert werden. Die Drucklisten enthalten bewusst keine E-Mail-Adressen, Zugangscodes oder privaten Hinweise.
+
+Ausdrucke enthalten trotzdem personenbezogene Namen. Nur berechtigte Personen dürfen sie erhalten. Nach dem Einsatz müssen sie entsprechend der festgelegten Aufbewahrung sicher verwahrt oder vernichtet werden.
+
+## 9. Betrieb und Veranstaltungsende
 
 - Datenbank und Uploads regelmäßig sichern.
 - Adminzugang nur berechtigten Personen geben.

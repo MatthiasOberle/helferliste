@@ -235,6 +235,14 @@ $totalCodes = (int)$db->query("SELECT COUNT(*) FROM access_codes")->fetchColumn(
                 <a class="btn secondary" href="export.php?download=notes">Hinweise herunterladen</a>
             </div>
         </div>
+
+        <div class="export-box">
+            <h2>Drucklisten</h2>
+            <p class="muted">Erstellt einen kompakten Schichtplan oder getrennte Anwesenheitslisten ohne E-Mail-Adressen, Codes und private Hinweise.</p>
+            <div class="button-row">
+                <a class="btn secondary" href="print_lists.php">Drucklisten öffnen</a>
+            </div>
+        </div>
     </div>
 </div>
 </body>

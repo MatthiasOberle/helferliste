@@ -102,7 +102,8 @@ Abgeschlossen:
 - vierstufigen Einrichtungsassistenten für Veranstaltung, Pflichtangaben, erste Schicht und Freigabe umgesetzt
 - Beispielschichten aus der Veröffentlichungsbereitschaft ausgeschlossen und beim ersten echten Schichtaufbau sicher deaktiviert
 - CSV-Import für Kontakte mit Vorschau, Dublettenprüfung und automatischer Code-Erzeugung umgesetzt
+- Druckansichten für Schichtplan und Anwesenheitslisten umgesetzt
 
 Als Nächstes:
 
-1. Druckansichten für Schichtplan und Anwesenheitslisten ergänzen.
+1. Einladungs- und Erinnerungswerkzeuge ausbauen.

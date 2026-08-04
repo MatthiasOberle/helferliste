@@ -142,6 +142,25 @@ sqlite3 "${database_file}" "
   INSERT INTO entry_shifts (entry_id, shift_id) VALUES (last_insert_rowid(), ${shift_id});
 "
 
+schedule_status="$(curl -sS -b "${test_root}/cookies.txt" -o "${test_root}/print-schedule.html" -w '%{http_code}' "http://127.0.0.1:${test_port}/print_lists.php?view=schedule")"
+[[ "${schedule_status}" == "200" ]]
+grep -q 'Schichtplan' "${test_root}/print-schedule.html"
+grep -q 'HTTP Beispiel' "${test_root}/print-schedule.html"
+grep -q 'Aufbau' "${test_root}/print-schedule.html"
+grep -q '@media print' "${test_root}/print-schedule.html"
+! grep -q 'http@example.org' "${test_root}/print-schedule.html"
+! grep -q '7171' "${test_root}/print-schedule.html"
+! grep -q 'Testhinweis' "${test_root}/print-schedule.html"
+
+attendance_status="$(curl -sS -b "${test_root}/cookies.txt" -o "${test_root}/print-attendance.html" -w '%{http_code}' "http://127.0.0.1:${test_port}/print_lists.php?view=attendance")"
+[[ "${attendance_status}" == "200" ]]
+grep -q 'Anwesenheitslisten' "${test_root}/print-attendance.html"
+grep -q 'HTTP Beispiel' "${test_root}/print-attendance.html"
+grep -q 'Anwesend' "${test_root}/print-attendance.html"
+! grep -q 'http@example.org' "${test_root}/print-attendance.html"
+! grep -q '7171' "${test_root}/print-attendance.html"
+! grep -q 'Testhinweis' "${test_root}/print-attendance.html"
+
 shifts_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/shifts.html" -w '%{http_code}' "http://127.0.0.1:${test_port}/edit_shifts.php")"
 [[ "${shifts_status}" == "200" ]]
 shifts_csrf="$(sed -n 's/.*name="csrf_token" value="\([^"]*\)".*/\1/p' "${test_root}/shifts.html" | head -n 1)"
@@ -219,4 +238,4 @@ after_reset_status="$(curl -sS -b "${test_root}/cookies.txt" -o "${test_root}/af
 [[ "${after_reset_status}" == "200" ]]
 grep -q 'Sichere Ersteinrichtung' "${test_root}/after-reset.html"
 
-echo 'OK: Adminzugang, Einrichtungsassistent, CSV-Import, Veranstaltungsabschluss, öffentliche Seite, Export, Reset und Sitzungsentzug funktionieren.'
+echo 'OK: Adminzugang, Einrichtungsassistent, CSV-Import, Drucklisten, Veranstaltungsabschluss, öffentliche Seite, Export, Reset und Sitzungsentzug funktionieren.'
