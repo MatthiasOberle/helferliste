@@ -380,6 +380,7 @@ function adminNav(string $active = ''): void {
         'Auswertung' => [
             'stats.php' => ['Statistik', 'stats'],
             'export.php' => ['Export', 'export'],
+            'print_lists.php' => ['Drucklisten', 'print'],
         ],
         'System' => [
             'setup_wizard.php' => ['Einrichtungsassistent', 'setup'],
@@ -553,6 +554,7 @@ $adminViewScripts = [
     'codes.php',
     'stats.php',
     'export.php',
+    'print_lists.php',
     'edit_shifts.php',
     'edit_entry.php',
     'settings.php',

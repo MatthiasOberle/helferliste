@@ -56,5 +56,8 @@ jobs:
       - name: CSV-Kontaktimport prüfen
         run: php tests/contact_import.php
 
+      - name: Schichtplan und Anwesenheitslisten prüfen
+        run: php tests/print_lists.php
+
       - name: Sichere Admin-Ersteinrichtung prüfen
         run: bash tests/http_admin_setup.sh

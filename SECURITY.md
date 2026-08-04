@@ -30,6 +30,7 @@ Keine realen personenbezogenen Daten, Zugangscodes, Passwörter oder vollständi
 - Schreibrechte auf `data/` und `assets/uploads/` beschränken
 - Ausführung von Skripten im Upload-Ordner verhindern
 - CSV-Kontaktimporte vor dem Bestätigen in der Vorschau kontrollieren und nur notwendige E-Mail-Adressen importieren
+- gedruckte Schicht- und Anwesenheitslisten nur berechtigten Personen geben und nach dem Einsatz sicher vernichten
 - regelmäßige, getestete Backups anlegen
 - nur berechtigten Personen Adminzugriff geben
 - Impressum, Datenschutz und Aufbewahrungsdauer an den eigenen Einsatz anpassen

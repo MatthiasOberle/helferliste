@@ -66,6 +66,7 @@ Alle abgebildeten Namen, E-Mail-Adressen, Codes und Veranstaltungsangaben sind f
 - automatische Sicherung beim Abschluss und Start der nächsten Veranstaltung aus einer Vorlage
 - abgeschlossene Veranstaltungen mit anonymen Ergebnissen und Schichtauslastung archivieren
 - personenbezogene Archivdaten optional exportieren und kontrolliert löschen
+- Schichtplan und getrennte Anwesenheitslisten druck- oder PDF-fertig ausgeben
 - Veranstaltung als Entwurf, veröffentlicht oder abgeschlossen verwalten
 - Veröffentlichung erst nach verständlicher Prüfung der technischen Pflichtangaben
 - umschaltbare Mobil- und Desktopansicht
@@ -89,6 +90,9 @@ Mitgeliefert werden neutrale Motive für Feuerwehr, THW und Notarzt. Eigene PNG-
 
 - kompletter TSV-Export für Excel
 - gesonderter Export ausgefüllter Hinweise und Wünsche
+- kompakter Schichtplan mit Zeiten, Orten, Kapazitäten und eingeteilten Namen
+- eigene Anwesenheitsseite je aktiver Schicht
+- keine E-Mail-Adressen, Zugangscodes oder privaten Hinweise in den Drucklisten
 - Änderungswunsch-Verlauf im Gesamtexport
 - Rückmeldequote sowie Zu- und Absagen
 - Auslastung der Schichten
@@ -154,6 +158,7 @@ Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php`
 │   ├── scheduling.php
 │   ├── setup_wizard.php
 │   ├── contact_import.php
+│   ├── print_lists.php
 │   └── http_admin_setup.sh
 ├── INSTALL.md
 ├── CONFIGURATION.md
@@ -181,6 +186,8 @@ Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php`
     ├── setup_wizard.php
     ├── setup_wizard_lib.php
     ├── contact_import_lib.php
+    ├── print_lists.php
+    ├── print_lists_lib.php
     ├── event_archive.php
     ├── shift_helpers.php
     ├── settings.php
