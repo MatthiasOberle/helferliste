@@ -111,6 +111,30 @@ database_file="${test_root}/data/helferliste.sqlite"
 shift_id="$(sqlite3 "${database_file}" "SELECT id FROM shifts WHERE active=1 AND title='Aufbau' ORDER BY id DESC LIMIT 1;")"
 [[ -n "${shift_id}" ]]
 
+codes_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/codes.html" -w '%{http_code}' "http://127.0.0.1:${test_port}/codes.php")"
+[[ "${codes_status}" == "200" ]]
+codes_csrf="$(sed -n 's/.*name="csrf_token" value="\([^"]*\)".*/\1/p' "${test_root}/codes.html" | head -n 1)"
+[[ -n "${codes_csrf}" ]]
+import_preview_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/import-preview.html" -w '%{http_code}' \
+  -F "csrf_token=${codes_csrf}" \
+  -F 'action=preview_contact_import' \
+  -F "contacts_csv=@${project_root}/tests/fixtures/kontakte.csv;type=text/csv" \
+  "http://127.0.0.1:${test_port}/codes.php")"
+[[ "${import_preview_status}" == "200" ]]
+grep -q '2 Kontakte jetzt importieren' "${test_root}/import-preview.html"
+grep -q 'ungültige E-Mail-Adresse' "${test_root}/import-preview.html"
+import_token="$(sed -n 's/.*name="import_token" value="\([^"]*\)".*/\1/p' "${test_root}/import-preview.html" | head -n 1)"
+[[ -n "${import_token}" ]]
+import_confirm_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/import-confirm.html" -w '%{http_code}' \
+  --data-urlencode "csrf_token=${codes_csrf}" \
+  --data-urlencode 'action=confirm_contact_import' \
+  --data-urlencode "import_token=${import_token}" \
+  "http://127.0.0.1:${test_port}/codes.php")"
+[[ "${import_confirm_status}" == "200" ]]
+grep -q '2 Kontakte wurden importiert' "${test_root}/import-confirm.html"
+[[ "$(sqlite3 "${database_file}" "SELECT COUNT(*) FROM access_codes WHERE email IN ('csv-eins@example.org', 'csv-zwei@example.org');")" == "2" ]]
+[[ "$(sqlite3 "${database_file}" "SELECT COUNT(DISTINCT code) FROM access_codes;")" == "2" ]]
+
 sqlite3 "${database_file}" "
   INSERT OR REPLACE INTO app_settings (setting_key, setting_value, updated_at) VALUES ('event_status', 'published', datetime('now'));
   INSERT INTO access_codes (email, code, created_at) VALUES ('http@example.org', '7171', datetime('now'));
@@ -195,4 +219,4 @@ after_reset_status="$(curl -sS -b "${test_root}/cookies.txt" -o "${test_root}/af
 [[ "${after_reset_status}" == "200" ]]
 grep -q 'Sichere Ersteinrichtung' "${test_root}/after-reset.html"
 
-echo 'OK: Adminzugang, Einrichtungsassistent, Veranstaltungsabschluss, öffentliche Seite, Export, Reset und Sitzungsentzug funktionieren.'
+echo 'OK: Adminzugang, Einrichtungsassistent, CSV-Import, Veranstaltungsabschluss, öffentliche Seite, Export, Reset und Sitzungsentzug funktionieren.'

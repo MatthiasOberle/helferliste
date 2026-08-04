@@ -29,6 +29,7 @@ Keine realen personenbezogenen Daten, Zugangscodes, Passwörter oder vollständi
 - Datenbank außerhalb des öffentlichen Webroots speichern
 - Schreibrechte auf `data/` und `assets/uploads/` beschränken
 - Ausführung von Skripten im Upload-Ordner verhindern
+- CSV-Kontaktimporte vor dem Bestätigen in der Vorschau kontrollieren und nur notwendige E-Mail-Adressen importieren
 - regelmäßige, getestete Backups anlegen
 - nur berechtigten Personen Adminzugriff geben
 - Impressum, Datenschutz und Aufbewahrungsdauer an den eigenen Einsatz anpassen

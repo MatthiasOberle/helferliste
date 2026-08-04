@@ -74,9 +74,21 @@ Die mitgelieferten Schichten sind nur Beispiele und zählen nicht als veröffent
 6. wiederkehrende Schichten bei Bedarf duplizieren und anschließend anpassen.
 7. Die Namen beider Schichtkategorien lassen sich über die öffentlichen Seitentexte frei an den eigenen Ablauf anpassen.
 
-## 7. Codes und Einladungen
+## 7. Kontakte, Codes und Einladungen
 
-Zugangscodes können einzeln oder aus einer E-Mail-Liste erzeugt werden. Vor dem Versand:
+Zugangscodes können einzeln, aus einer eingefügten E-Mail-Liste oder aus einer CSV-Datei erzeugt werden.
+
+Für den CSV-Import:
+
+1. Datei als CSV UTF-8 mit einer Kopfzeile speichern.
+2. Die E-Mail-Spalte `E-Mail`, `E-Mail-Adresse`, `Email`, `Emailadresse` oder `Mail` nennen.
+3. Datei unter `Verwaltung → Zugangscodes` auswählen und zuerst prüfen lassen.
+4. Vorschau kontrollieren. Ungültige, doppelte und bereits vorhandene Adressen werden nicht importiert.
+5. Erst danach den Import bestätigen.
+
+Komma, Semikolon und Tabulator werden automatisch erkannt. Weitere Spalten wie Name, Organisation oder Gruppe werden aus Gründen der Datenminimierung nicht gespeichert. Die Datei darf höchstens 1.000 Datenzeilen und 2 MB enthalten. Sie wird nicht dauerhaft auf dem Server abgelegt.
+
+Vor dem Versand:
 
 - Basis-URL prüfen
 - einen Testcode erzeugen
