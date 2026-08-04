@@ -16,6 +16,7 @@ Alle wichtigen Änderungen dieses Projekts werden hier dokumentiert.
 - Entwicklungsstand auf `1.5.0-dev` bei unverändertem Datenbankschema 4 angehoben
 - Beispielschichten von der Veröffentlichungsbereitschaft ausgeschlossen
 - neue Installationen bis zum Abschluss des Einrichtungsassistenten sicher im Entwurf gestartet
+- GitHub-Qualitätsprüfung auf `actions/checkout@v7` und damit die aktuelle Aktionslaufzeit umgestellt
 
 ### Ergänzt
 
