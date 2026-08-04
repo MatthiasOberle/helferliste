@@ -53,5 +53,8 @@ jobs:
       - name: Geführte Ersteinrichtung prüfen
         run: php tests/setup_wizard.php
 
+      - name: CSV-Kontaktimport prüfen
+        run: php tests/contact_import.php
+
       - name: Sichere Admin-Ersteinrichtung prüfen
         run: bash tests/http_admin_setup.sh

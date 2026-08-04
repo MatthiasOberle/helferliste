@@ -13,7 +13,7 @@ Alle wichtigen Änderungen dieses Projekts werden hier dokumentiert.
 - Linux- und Windows-Installer auf den gemeinsamen Migrationsmechanismus umgestellt
 - allgemein bekanntes Standardpasswort durch einmaligen, zufälligen Einrichtungscode ersetzt
 - Mindestlänge für neue Admin-Passwörter auf 12 Zeichen angehoben
-- Entwicklungsstand auf `1.4.0-dev` bei unverändertem Datenbankschema 4 angehoben
+- Entwicklungsstand auf `1.5.0-dev` bei unverändertem Datenbankschema 4 angehoben
 - Beispielschichten von der Veröffentlichungsbereitschaft ausgeschlossen
 - neue Installationen bis zum Abschluss des Einrichtungsassistenten sicher im Entwurf gestartet
 
@@ -39,6 +39,9 @@ Alle wichtigen Änderungen dieses Projekts werden hier dokumentiert.
 - vierstufigen Einrichtungsassistenten für Veranstaltung, Pflichtangaben, erste Schicht und Freigabe ergänzt
 - automatisches Deaktivieren unbenutzter Beispielschichten beim Anlegen der ersten konkreten Schicht ergänzt
 - automatisierten Funktions- und HTTP-Test für den vollständigen Einrichtungsassistenten ergänzt
+- CSV-Import für bis zu 1.000 Kontakte mit Vorschau, automatischer Trennzeichenerkennung und Dublettenprüfung ergänzt
+- atomische Code-Erzeugung für eingefügte und importierte E-Mail-Adressen ergänzt
+- automatisierten Test für CSV-Auswertung, Zeichencodierung, Dubletten und Import ergänzt
 
 ## 1.0.1 – 2026-07-27
 

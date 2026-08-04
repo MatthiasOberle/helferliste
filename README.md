@@ -12,7 +12,7 @@ Helfer benötigen kein Benutzerkonto und keine App. Ein persönlicher vierstelli
 
 Die Helferliste ist kein abgeschlossenes Archivprojekt. Ich entwickle sie Schritt für Schritt zu einem Werkzeug weiter, das sich auch außerhalb der Feuerwehr einfach einsetzen lässt.
 
-Im aktuellen Entwicklungszweig sind bereits eine geführte Ersteinrichtung, sichere Datenbankaktualisierungen, Veranstaltungsarchive sowie deutlich flexiblere Schichten hinzugekommen. Neue Funktionen werden dort zuerst praktisch getestet und laufen automatisch unter PHP 8.3, 8.4 und 8.5 durch. Der Hauptzweig bleibt der ruhige, stabile Stand für veröffentlichte Versionen.
+Im aktuellen Produktstand sind bereits eine geführte Ersteinrichtung, sichere Datenbankaktualisierungen, Veranstaltungsarchive, deutlich flexiblere Schichten und ein geprüfter CSV-Kontaktimport hinzugekommen. Neue Funktionen werden zuerst im Entwicklungszweig praktisch getestet und laufen automatisch unter PHP 8.3, 8.4 und 8.5 durch. Fertige Arbeitspakete werden anschließend über einen Pull Request in den geschützten Hauptzweig übernommen.
 
 ## Einblicke
 
@@ -58,6 +58,7 @@ Alle abgebildeten Namen, E-Mail-Adressen, Codes und Veranstaltungsangaben sind f
 - Datum, Beginn, Ende, Ort und öffentlichen Hinweis je Schicht pflegen
 - Schichten mit allen Angaben duplizieren
 - Zugangscodes einzeln oder aus E-Mail-Listen erzeugen
+- Kontakte aus CSV-Dateien mit Vorschau und Dublettenprüfung importieren
 - persönliche Einladungslinks kopieren
 - ungenutzte Codes bereinigen
 - Veranstaltung kontrolliert abschließen und aktive Daten zurücksetzen
@@ -152,6 +153,7 @@ Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php`
 │   ├── event_lifecycle.php
 │   ├── scheduling.php
 │   ├── setup_wizard.php
+│   ├── contact_import.php
 │   └── http_admin_setup.sh
 ├── INSTALL.md
 ├── CONFIGURATION.md
@@ -178,6 +180,7 @@ Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php`
     ├── admin.php
     ├── setup_wizard.php
     ├── setup_wizard_lib.php
+    ├── contact_import_lib.php
     ├── event_archive.php
     ├── shift_helpers.php
     ├── settings.php

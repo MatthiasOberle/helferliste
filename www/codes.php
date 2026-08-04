@@ -9,51 +9,17 @@ $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 require_once __DIR__ . '/app_config.php';
 require_once __DIR__ . '/tracking.php';
+require_once __DIR__ . '/contact_import_lib.php';
 $appConfig = appConfig($db);
 
 function h(string $value): string {
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 }
 
-
-// Erlaubt E-Mail-Listen mit Komma, Semikolon oder Zeilenumbrüchen.
-function normalizeEmails(string $input): array {
-    $input = substr(trim($input), 0, 20000);
-    $parts = preg_split('/[\s,;]+/', $input) ?: [];
-    $emails = [];
-    foreach ($parts as $part) {
-        $email = strtolower(trim($part));
-        if ($email !== '' && strlen($email) <= 254) {
-            $emails[$email] = $email;
-        }
-    }
-    return array_slice(array_values($emails), 0, 500);
+function countLabel(int $count, string $singular, string $plural): string {
+    return $count . ' ' . ($count === 1 ? $singular : $plural);
 }
 
-// Verhindert doppelte Zugangscodes.
-function codeExists(PDO $db, string $code): bool {
-    $stmt = $db->prepare("SELECT 1 FROM access_codes WHERE code = ? LIMIT 1");
-    $stmt->execute([$code]);
-    return (bool)$stmt->fetchColumn();
-}
-
-// Erstellt einen freien vierstelligen Code.
-function generateUniqueCode(PDO $db): string {
-    for ($i = 0; $i < 200; $i++) {
-        $code = (string)random_int(1000, 9999);
-        if (!codeExists($db, $code)) {
-            return $code;
-        }
-    }
-    throw new RuntimeException('Es konnte kein freier vierstelliger Code gefunden werden.');
-}
-
-// Eine E-Mail-Adresse soll im Event nur einmal vorkommen.
-function emailAlreadyExists(PDO $db, string $email): bool {
-    $stmt = $db->prepare("SELECT 1 FROM access_codes WHERE email = ? LIMIT 1");
-    $stmt->execute([$email]);
-    return (bool)$stmt->fetchColumn();
-}
 
 // Benutzte Codes werden nicht einzeln gelöscht, damit Rückmeldungen nachvollziehbar bleiben.
 function codeIsUsed(PDO $db, int $codeId): bool {
@@ -66,47 +32,98 @@ $message = '';
 $error = '';
 $createdCodes = [];
 $skippedEmails = [];
+$importPreview = null;
+
+if (isset($_SESSION['contact_import_preview'])
+    && time() - (int)($_SESSION['contact_import_preview']['created_at'] ?? 0) > CONTACT_IMPORT_SESSION_TTL
+) {
+    unset($_SESSION['contact_import_preview']);
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
-        // Aus der eingefügten E-Mail-Liste werden gültige, neue Codes erzeugt.
-if ($action === 'create_codes') {
+    // Aus der eingefügten E-Mail-Liste werden gültige, neue Codes erzeugt.
+    if ($action === 'create_codes') {
         $emails = normalizeEmails((string)($_POST['emails'] ?? ''));
 
         if (empty($emails)) {
             $error = 'Bitte mindestens eine E-Mail-Adresse eingeben.';
         } else {
-            $stmt = $db->prepare("INSERT INTO access_codes (email, code, created_at) VALUES (?, ?, datetime('now'))");
-
-            foreach ($emails as $email) {
-                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    $skippedEmails[] = $email . ' (ungültig)';
-                    continue;
+            try {
+                $result = createAccessCodes($db, $emails);
+                $createdCodes = $result['created'];
+                $skippedEmails = $result['skipped'];
+                if ($createdCodes !== []) {
+                    logEvent($db, 'codes_created', count($createdCodes) . ' Codes erzeugt.');
+                    $message = countLabel(count($createdCodes), 'Code wurde', 'Codes wurden') . ' erzeugt.';
+                } elseif ($skippedEmails === []) {
+                    $error = 'Es wurden keine Codes erzeugt.';
                 }
-
-                if (emailAlreadyExists($db, $email)) {
-                    $skippedEmails[] = $email . ' (bereits vorhanden)';
-                    continue;
-                }
-
-                try {
-                    $code = generateUniqueCode($db);
-                    $stmt->execute([$email, $code]);
-                    $createdCodes[] = ['email' => $email, 'code' => $code];
-                } catch (Throwable $e) {
-                    $skippedEmails[] = $email . ' (Fehler beim Erzeugen)';
-                }
-            }
-
-            if (!empty($createdCodes)) {
-                logEvent($db, 'codes_created', count($createdCodes) . ' Codes erzeugt.');
-                $message = count($createdCodes) . ' Code(s) wurden erzeugt.';
-            }
-            if (empty($createdCodes) && empty($skippedEmails)) {
-                $error = 'Es wurden keine Codes erzeugt.';
+            } catch (Throwable) {
+                $error = 'Die Codes konnten nicht sicher erzeugt werden. Es wurde nichts gespeichert.';
             }
         }
+    }
+
+    if ($action === 'preview_contact_import') {
+        try {
+            $importPreview = contactImportPreviewUpload($_FILES['contacts_csv'] ?? null, $db);
+            $previewToken = bin2hex(random_bytes(24));
+            $_SESSION['contact_import_preview'] = [
+                'token' => $previewToken,
+                'created_at' => time(),
+                'filename' => $importPreview['filename'],
+                'emails' => $importPreview['ready_emails'],
+            ];
+        } catch (Throwable $exception) {
+            unset($_SESSION['contact_import_preview']);
+            $error = $exception instanceof InvalidArgumentException
+                ? $exception->getMessage()
+                : 'Die CSV-Datei konnte nicht sicher geprüft werden.';
+        }
+    }
+
+    if ($action === 'confirm_contact_import') {
+        $storedPreview = $_SESSION['contact_import_preview'] ?? null;
+        $submittedToken = (string)($_POST['import_token'] ?? '');
+        $storedToken = is_array($storedPreview) ? (string)($storedPreview['token'] ?? '') : '';
+        $createdAt = is_array($storedPreview) ? (int)($storedPreview['created_at'] ?? 0) : 0;
+
+        if ($storedToken === ''
+            || $submittedToken === ''
+            || !hash_equals($storedToken, $submittedToken)
+            || time() - $createdAt > CONTACT_IMPORT_SESSION_TTL
+        ) {
+            unset($_SESSION['contact_import_preview']);
+            $error = 'Die Importvorschau ist abgelaufen. Bitte die CSV-Datei erneut auswählen.';
+        } else {
+            $emails = array_values(array_filter(
+                (array)($storedPreview['emails'] ?? []),
+                static fn(mixed $email): bool => is_string($email)
+            ));
+            $filename = basename((string)($storedPreview['filename'] ?? 'kontakte.csv'));
+            unset($_SESSION['contact_import_preview']);
+
+            try {
+                $result = createAccessCodes($db, $emails);
+                $createdCodes = $result['created'];
+                $skippedEmails = $result['skipped'];
+                if ($createdCodes !== []) {
+                    logEvent($db, 'contacts_imported', count($createdCodes) . ' Kontakte aus ' . $filename . ' importiert.');
+                    $message = countLabel(count($createdCodes), 'Kontakt wurde', 'Kontakte wurden') . ' importiert und ' . (count($createdCodes) === 1 ? 'hat' : 'haben') . ' einen Zugangscode erhalten.';
+                } else {
+                    $error = 'Aus der Vorschau konnten keine neuen Kontakte importiert werden.';
+                }
+            } catch (Throwable) {
+                $error = 'Der CSV-Import konnte nicht sicher abgeschlossen werden. Es wurde nichts gespeichert.';
+            }
+        }
+    }
+
+    if ($action === 'cancel_contact_import') {
+        unset($_SESSION['contact_import_preview']);
+        $message = 'Die Importvorschau wurde verworfen.';
     }
 
     if ($action === 'delete_one') {
@@ -121,8 +138,8 @@ if ($action === 'create_codes') {
         }
     }
 
-        // Massenlöschung nur für unbenutzte Codes und nur mit Bestätigungstext.
-if ($action === 'delete_unused') {
+    // Massenlöschung nur für unbenutzte Codes und nur mit Bestätigungstext.
+    if ($action === 'delete_unused') {
         $confirm = trim((string)($_POST['confirm'] ?? ''));
         if ($confirm !== 'UNBENUTZTE CODES LOESCHEN') {
             $error = 'Bestätigungstext stimmt nicht.';
@@ -160,7 +177,7 @@ $rows = $db->query("SELECT ac.*, e.id AS entry_id, e.name AS entry_name, e.statu
         .wrap { width: min(1680px, calc(100% - 28px)); margin: 0 auto; padding: 20px 0 40px; }
         .card { background: white; border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 8px rgba(0,0,0,.04); }
         h1, h2 { margin-top: 0; }
-        textarea, input[type="text"] { width: 100%; border: 1px solid #bbb; border-radius: 10px; padding: 10px; font-size: 1rem; }
+        textarea, input[type="text"], input[type="file"] { width: 100%; border: 1px solid #bbb; border-radius: 10px; padding: 10px; font-size: 1rem; }
         textarea { min-height: 130px; resize: vertical; }
         .btn, button { display: inline-block; border: 0; border-radius: 10px; padding: 10px 13px; background: var(--primary); color: white; font-weight: bold; text-decoration: none; cursor: pointer; margin-top: 10px; }
         .btn.secondary, button.secondary { background: #555; }
@@ -182,6 +199,13 @@ $rows = $db->query("SELECT ac.*, e.id AS entry_id, e.name AS entry_name, e.statu
         .limit-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
         .limit-form select { padding: 7px; border-radius: 8px; border: 1px solid #bbb; }
         button.compact { margin-top: 0; padding: 7px 10px; }
+        .import-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 9px; margin: 14px 0; }
+        .import-stat { border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: #fafafa; }
+        .import-stat strong { display: block; font-size: 1.45rem; }
+        .status-ready { color: #166534; font-weight: bold; }
+        .status-skip { color: #8b0000; font-weight: bold; }
+        .button-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .button-row form { margin: 0; }
     </style>
 </head>
 <body class="<?= h(adminBodyClass()) ?>">
@@ -211,6 +235,74 @@ $rows = $db->query("SELECT ac.*, e.id AS entry_id, e.name AS entry_name, e.statu
             <button type="submit">Codes erzeugen</button>
         </form>
     </div>
+
+    <div class="card">
+        <h2>Kontakte aus CSV importieren</h2>
+        <p>Die Datei braucht eine Kopfzeile mit einer Spalte <strong>E-Mail</strong>. Komma, Semikolon und Tabulator werden automatisch erkannt.</p>
+        <p class="muted">Andere Spalten werden nicht gespeichert. Die Datei darf höchstens 1.000 Kontakte und 2 MB enthalten und wird nach der Vorschau nicht dauerhaft abgelegt.</p>
+        <form method="post" enctype="multipart/form-data">
+            <?= csrfField() ?>
+            <input type="hidden" name="action" value="preview_contact_import">
+            <input type="hidden" name="MAX_FILE_SIZE" value="<?= CONTACT_IMPORT_MAX_BYTES ?>">
+            <label for="contacts_csv">CSV-Datei auswählen</label><br>
+            <input id="contacts_csv" name="contacts_csv" type="file" accept=".csv,.txt,text/csv,text/plain" required>
+            <button type="submit">Datei prüfen</button>
+        </form>
+    </div>
+
+    <?php if (is_array($importPreview)): ?>
+        <?php $importCounts = $importPreview['counts']; ?>
+        <div class="card" id="import-vorschau">
+            <h2>Importvorschau</h2>
+            <p><strong><?= h((string)$importPreview['filename']) ?></strong> · Trennzeichen: <?= h((string)$importPreview['delimiter']) ?></p>
+            <?php if ($importPreview['ignored_headers'] !== []): ?>
+                <p class="muted">Diese Spalten werden bewusst nicht übernommen: <?= h(implode(', ', $importPreview['ignored_headers'])) ?></p>
+            <?php endif; ?>
+            <div class="import-stats">
+                <div class="import-stat"><strong><?= (int)$importCounts['total'] ?></strong>Zeilen</div>
+                <div class="import-stat"><strong><?= (int)$importCounts['ready'] ?></strong>für Import bereit</div>
+                <div class="import-stat"><strong><?= (int)$importCounts['existing'] ?></strong>bereits vorhanden</div>
+                <div class="import-stat"><strong><?= (int)$importCounts['duplicate'] ?></strong>doppelt</div>
+                <div class="import-stat"><strong><?= (int)$importCounts['invalid'] + (int)$importCounts['empty'] ?></strong>ungültig oder leer</div>
+            </div>
+
+            <?php if ($importPreview['rows'] !== []): ?>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Zeile</th><th>E-Mail</th><th>Ergebnis</th></tr></thead>
+                        <tbody>
+                        <?php foreach ($importPreview['rows'] as $row): ?>
+                            <tr>
+                                <td><?= (int)$row['line'] ?></td>
+                                <td><?= h($row['email'] !== '' ? (string)$row['email'] : '—') ?></td>
+                                <td class="<?= $row['status'] === 'ready' ? 'status-ready' : 'status-skip' ?>"><?= h((string)$row['reason']) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?php if ($importPreview['truncated_preview']): ?>
+                    <p class="muted">Angezeigt werden die ersten <?= CONTACT_IMPORT_PREVIEW_ROWS ?> Datenzeilen. Die Summen beziehen sich auf die vollständige Datei.</p>
+                <?php endif; ?>
+            <?php endif; ?>
+
+            <div class="button-row">
+                <?php if ((int)$importCounts['ready'] > 0): ?>
+                    <form method="post">
+                        <?= csrfField() ?>
+                        <input type="hidden" name="action" value="confirm_contact_import">
+                        <input type="hidden" name="import_token" value="<?= h((string)($_SESSION['contact_import_preview']['token'] ?? '')) ?>">
+                        <button type="submit"><?= h(countLabel((int)$importCounts['ready'], 'Kontakt', 'Kontakte')) ?> jetzt importieren</button>
+                    </form>
+                <?php endif; ?>
+                <form method="post">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="action" value="cancel_contact_import">
+                    <button class="secondary" type="submit">Vorschau verwerfen</button>
+                </form>
+            </div>
+        </div>
+    <?php endif; ?>
 
     <?php if (!empty($createdCodes)): ?>
         <div class="card">
