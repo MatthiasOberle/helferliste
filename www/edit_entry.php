@@ -6,6 +6,7 @@ $db = new PDO('sqlite:' . __DIR__ . '/../data/helferliste.sqlite');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 require_once __DIR__ . '/app_config.php';
+require_once __DIR__ . '/database_tools.php';
 require_once __DIR__ . '/shift_helpers.php';
 $appConfig = appConfig($db);
 
@@ -59,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Bei „Hilft“ muss mindestens eine normale Schicht oder Springer-Schicht ausgewählt sein.';
     } else {
         try {
-            $db->exec('BEGIN IMMEDIATE TRANSACTION');
+            helferlisteBeginImmediateTransaction($db);
 
                         // Für Hilfszusagen wird geprüft, ob die gewählten Schichten weiterhin Kapazität haben.
 if ($status === 'help') {
@@ -165,15 +166,13 @@ $stmt = $db->prepare("DELETE FROM entry_shifts WHERE entry_id = :entry_id");
                 }
             }
 
-            $db->commit();
+            helferlisteCommitTransaction($db);
 
             header('Location: admin.php');
             exit;
 
         } catch (Throwable $e) {
-            if ($db->inTransaction()) {
-                $db->rollBack();
-            }
+            helferlisteRollbackTransaction($db);
             $error = $e->getMessage();
         }
     }

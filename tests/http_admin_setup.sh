@@ -140,7 +140,31 @@ sqlite3 "${database_file}" "
   INSERT INTO access_codes (email, code, created_at) VALUES ('http@example.org', '7171', datetime('now'));
   INSERT INTO entries (name, status, note, created_at, access_code_id) VALUES ('HTTP Beispiel', 'help', 'Testhinweis', datetime('now'), last_insert_rowid());
   INSERT INTO entry_shifts (entry_id, shift_id) VALUES (last_insert_rowid(), ${shift_id});
+  INSERT INTO shifts (title, max_slots, sort_order, active, shift_date, start_time, end_time, location, note)
+  VALUES ('Abbau', 8, 2, 1, '2026-07-12', '18:00', '20:00', 'Festplatz', 'Gemeinsam aufräumen');
 "
+entry_id="$(sqlite3 "${database_file}" "SELECT id FROM entries WHERE name='HTTP Beispiel' ORDER BY id DESC LIMIT 1;")"
+additional_shift_id="$(sqlite3 "${database_file}" "SELECT id FROM shifts WHERE active=1 AND title='Abbau' ORDER BY id DESC LIMIT 1;")"
+[[ -n "${entry_id}" ]]
+[[ -n "${additional_shift_id}" ]]
+
+edit_entry_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/edit-entry.html" -w '%{http_code}' "http://127.0.0.1:${test_port}/edit_entry.php?id=${entry_id}")"
+[[ "${edit_entry_status}" == "200" ]]
+edit_entry_csrf="$(sed -n 's/.*name="csrf_token" value="\([^"]*\)".*/\1/p' "${test_root}/edit-entry.html" | head -n 1)"
+[[ -n "${edit_entry_csrf}" ]]
+
+edit_entry_post_status="$(curl -sS -D "${test_root}/edit-entry-post-headers.txt" -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/edit-entry-post.html" -w '%{http_code}' \
+  --data-urlencode "csrf_token=${edit_entry_csrf}" \
+  --data-urlencode "entry_id=${entry_id}" \
+  --data-urlencode 'name=HTTP Beispiel' \
+  --data-urlencode 'status=help' \
+  --data-urlencode 'note=Testhinweis' \
+  --data-urlencode "shifts[]=${shift_id}" \
+  --data-urlencode "shifts[]=${additional_shift_id}" \
+  "http://127.0.0.1:${test_port}/edit_entry.php")"
+[[ "${edit_entry_post_status}" == "302" ]]
+grep -qi '^Location: admin.php' "${test_root}/edit-entry-post-headers.txt"
+[[ "$(sqlite3 "${database_file}" "SELECT COUNT(*) FROM entry_shifts WHERE entry_id=${entry_id};")" == "2" ]]
 
 schedule_status="$(curl -sS -b "${test_root}/cookies.txt" -o "${test_root}/print-schedule.html" -w '%{http_code}' "http://127.0.0.1:${test_port}/print_lists.php?view=schedule")"
 [[ "${schedule_status}" == "200" ]]
@@ -238,4 +262,4 @@ after_reset_status="$(curl -sS -b "${test_root}/cookies.txt" -o "${test_root}/af
 [[ "${after_reset_status}" == "200" ]]
 grep -q 'Sichere Ersteinrichtung' "${test_root}/after-reset.html"
 
-echo 'OK: Adminzugang, Einrichtungsassistent, CSV-Import, Drucklisten, Veranstaltungsabschluss, öffentliche Seite, Export, Reset und Sitzungsentzug funktionieren.'
+echo 'OK: Adminzugang, Einrichtungsassistent, CSV-Import, manuelle Schichtzuordnung, Drucklisten, Veranstaltungsabschluss, öffentliche Seite, Export, Reset und Sitzungsentzug funktionieren.'
