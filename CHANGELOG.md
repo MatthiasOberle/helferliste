@@ -4,6 +4,10 @@ Alle wichtigen Änderungen dieses Projekts werden hier dokumentiert.
 
 ## Unveröffentlicht
 
+### Korrigiert
+
+- manuelle Schichtzuordnungen im Adminbereich unter PHP 8.3 ohne Transaktionsfehler speicherbar gemacht
+
 ### Geändert
 
 - getrennten Entwicklungszweig für den Ausbau zum universellen Produkt vorbereitet
