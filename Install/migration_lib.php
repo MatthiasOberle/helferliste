@@ -119,6 +119,7 @@ function helferlisteApplyMigration(PDO $db, int $version): void
         2 => __DIR__ . '/migrations/002_secure_admin_setup.sql',
         3 => __DIR__ . '/migrations/003_event_archives.sql',
         4 => __DIR__ . '/migrations/004_event_schedule_and_shift_fields.sql',
+        5 => __DIR__ . '/migrations/005_duty_roster_access.sql',
     ];
     $migrationFile = $migrationFiles[$version] ?? null;
     if ($migrationFile === null) {

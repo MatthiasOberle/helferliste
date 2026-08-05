@@ -67,6 +67,8 @@ Alle abgebildeten Namen, E-Mail-Adressen, Codes und Veranstaltungsangaben sind f
 - abgeschlossene Veranstaltungen mit anonymen Ergebnissen und Schichtauslastung archivieren
 - personenbezogene Archivdaten optional exportieren und kontrolliert löschen
 - Schichtplan und getrennte Anwesenheitslisten druck- oder PDF-fertig ausgeben
+- eine fertige Diensteinteilung als PDF geschützt hochladen, ersetzen, veröffentlichen und löschen
+- PDF-Zugriff nur nach einer bereits gespeicherten Zu- oder Absage freigeben
 - Veranstaltung als Entwurf, veröffentlicht oder abgeschlossen verwalten
 - Veröffentlichung erst nach verständlicher Prüfung der technischen Pflichtangaben
 - umschaltbare Mobil- und Desktopansicht
@@ -93,6 +95,7 @@ Mitgeliefert werden neutrale Motive für Feuerwehr, THW und Notarzt. Eigene PNG-
 - kompakter Schichtplan mit Zeiten, Orten, Kapazitäten und eingeteilten Namen
 - eigene Anwesenheitsseite je aktiver Schicht
 - keine E-Mail-Adressen, Zugangscodes oder privaten Hinweise in den Drucklisten
+- geschützte PDF-Ablage außerhalb des öffentlichen Webordners mit zeitlich begrenzter Zugriffsfreigabe
 - Änderungswunsch-Verlauf im Gesamtexport
 - Rückmeldequote sowie Zu- und Absagen
 - Auslastung der Schichten

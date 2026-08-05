@@ -50,6 +50,7 @@ try {
         'app_settings',
         'schema_migrations',
         'event_archives',
+        'duty_roster_login_attempts',
     ];
 
     foreach ($requiredTables as $table) {

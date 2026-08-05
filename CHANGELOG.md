@@ -17,12 +17,18 @@ Alle wichtigen Änderungen dieses Projekts werden hier dokumentiert.
 - Linux- und Windows-Installer auf den gemeinsamen Migrationsmechanismus umgestellt
 - allgemein bekanntes Standardpasswort durch einmaligen, zufälligen Einrichtungscode ersetzt
 - Mindestlänge für neue Admin-Passwörter auf 12 Zeichen angehoben
-- Entwicklungsstand auf `1.6.0-dev` bei unverändertem Datenbankschema 4 angehoben
+- Entwicklungsstand auf `1.7.0-dev` und Datenbankschema 5 angehoben
 - Beispielschichten von der Veröffentlichungsbereitschaft ausgeschlossen
 - neue Installationen bis zum Abschluss des Einrichtungsassistenten sicher im Entwurf gestartet
 - GitHub-Qualitätsprüfung auf `actions/checkout@v7` und damit die aktuelle Aktionslaufzeit umgestellt
 
 ### Ergänzt
+
+- geschützte Diensteinteilung mit PDF-Upload, Austausch, Vorschau, Veröffentlichung und Löschung im Adminbereich ergänzt
+- Zugriff per persönlichem Code oder E-Mail nur nach bereits gespeicherter Zu- oder Absage ergänzt
+- PDF außerhalb des Webordners, erneute Berechtigungsprüfung bei jedem Abruf, zeitlich begrenzte Sitzung und Fehlversuchssperre ergänzt
+- automatische Aufhebung der PDF-Veröffentlichung beim Start einer neuen Veranstaltung ergänzt
+- Funktions- und HTTP-Tests für Upload-Prüfung, Berechtigung, Sperre, Auslieferung und Widerruf ergänzt
 
 - wiederholbaren Smoke-Test für Neuinstallation, Datenbankschema, Fremdschlüssel und Einstellungen ergänzt
 - Anwendungsversion und fortlaufende Datenbank-Schema-Version eingeführt; Entwicklungsstand auf `1.2.0-dev` angehoben

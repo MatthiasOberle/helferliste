@@ -19,6 +19,7 @@ $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 require_once __DIR__ . '/app_config.php';
 require_once __DIR__ . '/shift_helpers.php';
 require_once __DIR__ . '/tracking.php';
+require_once __DIR__ . '/duty_roster_lib.php';
 $appConfig = appConfig($db);
 $eventAcceptsResponses = appEventAcceptsResponses($appConfig);
 $eventStatusNotice = appEventStatus($appConfig) === 'closed'
@@ -1128,6 +1129,11 @@ publicCsrfToken();
                     </div>
                 </div>
                 <?php if (appEventDateRange($appConfig) !== ''): ?><div class="notice info">Zeitraum: <?= h(appEventDateRange($appConfig)) ?></div><?php endif; ?>
+                <?php if (dutyRosterIsPublished($db)): ?>
+                    <div class="button-row">
+                        <a class="btn" href="duty_roster.php">Diensteinteilung ansehen</a>
+                    </div>
+                <?php endif; ?>
             </section>
         <?php elseif (!$accessCodeId): ?>
             <section class="card-section login-primary">

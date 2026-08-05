@@ -112,6 +112,14 @@ CREATE TABLE IF NOT EXISTS event_archives (
     includes_personal_data INTEGER NOT NULL DEFAULT 0 CHECK (includes_personal_data IN (0, 1))
 );
 
+CREATE TABLE IF NOT EXISTS duty_roster_login_attempts (
+    attempt_key TEXT PRIMARY KEY,
+    window_started_at INTEGER NOT NULL,
+    failures INTEGER NOT NULL DEFAULT 0,
+    blocked_until INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_access_codes_code ON access_codes(code);
 CREATE INDEX IF NOT EXISTS idx_entries_access_code_id ON entries(access_code_id);
 CREATE INDEX IF NOT EXISTS idx_entries_created_at ON entries(created_at);
@@ -119,6 +127,7 @@ CREATE INDEX IF NOT EXISTS idx_change_requests_status ON change_requests(status)
 CREATE INDEX IF NOT EXISTS idx_change_requests_entry_id ON change_requests(entry_id);
 CREATE INDEX IF NOT EXISTS idx_visit_stats_page ON visit_stats(page);
 CREATE INDEX IF NOT EXISTS idx_event_archives_closed_at ON event_archives(closed_at);
+CREATE INDEX IF NOT EXISTS idx_duty_roster_attempts_updated_at ON duty_roster_login_attempts(updated_at);
 
 INSERT OR IGNORE INTO shifts (id, title, max_slots, sort_order, active) VALUES
 (1, 'Beispiel: Aufbau Freitag 16:00 - 20:00', 5, 1, 1),
@@ -133,4 +142,4 @@ INSERT INTO event_log (created_at, action, detail)
 SELECT datetime('now'), 'installed', 'Helferliste wurde eingerichtet.'
 WHERE NOT EXISTS (SELECT 1 FROM event_log WHERE action = 'installed');
 
-PRAGMA user_version = 4;
+PRAGMA user_version = 5;
