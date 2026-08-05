@@ -50,6 +50,7 @@ Ziel: Vereine und Organisationen mit unterschiedlichen Abläufen können die Anw
 - Import von Kontakten aus CSV
 - verständliche Prüfung auf fehlende Pflichtangaben vor Veröffentlichung
 - Druckansicht für Schichtpläne und Anwesenheitslisten
+- geschützte Bereitstellung einer fertigen Diensteinteilung für Personen mit abgegebener Rückmeldung
 
 ## Stufe 3: Einladen und erinnern
 
@@ -103,6 +104,7 @@ Abgeschlossen:
 - Beispielschichten aus der Veröffentlichungsbereitschaft ausgeschlossen und beim ersten echten Schichtaufbau sicher deaktiviert
 - CSV-Import für Kontakte mit Vorschau, Dublettenprüfung und automatischer Code-Erzeugung umgesetzt
 - Druckansichten für Schichtplan und Anwesenheitslisten umgesetzt
+- geschützte PDF-Diensteinteilung mit kontrollierter Freigabe nach abgegebener Rückmeldung umgesetzt
 
 Als Nächstes:
 

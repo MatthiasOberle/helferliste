@@ -38,6 +38,7 @@ try {
     saveAppSetting($db, 'event_end_date', '2026-07-12');
     saveAppSetting($db, 'event_status', 'published');
     saveAppSetting($db, 'setup_wizard_completed', '1');
+    saveAppSetting($db, 'duty_roster_published', '1');
     saveAppSetting($db, 'text_login_heading', 'Eigene Einladung');
     saveAppSetting($db, 'primary_color', '#123456');
     $db->exec("UPDATE shifts SET shift_date = '2026-07-10', start_time = '16:00', end_time = '20:00', location = 'Festplatz', note = 'Bitte Handschuhe mitbringen' WHERE id = 1");
@@ -69,6 +70,7 @@ try {
     eventTestAssert('2027-07-09', eventSetting($db, 'event_start_date'), 'Beginn der nächsten Veranstaltung fehlt.');
     eventTestAssert('draft', eventSetting($db, 'event_status'), 'Neue Veranstaltung wurde nicht sicher als Entwurf gestartet.');
     eventTestAssert('0', eventSetting($db, 'setup_wizard_completed'), 'Neue Veranstaltung wurde fälschlich als vollständig eingerichtet markiert.');
+    eventTestAssert('0', eventSetting($db, 'duty_roster_published'), 'Alte Diensteinteilung wurde für die neue Veranstaltung nicht gesperrt.');
     eventTestAssert(3, (int)$db->query('SELECT COUNT(*) FROM shifts')->fetchColumn(), 'Schichtvorlage wurde nicht übernommen.');
     eventTestAssert('Eigene Einladung', eventSetting($db, 'text_login_heading'), 'Seitentexte wurden nicht übernommen.');
     eventTestAssert('#123456', eventSetting($db, 'primary_color'), 'Design wurde nicht übernommen.');
@@ -117,6 +119,7 @@ try {
     eventTestAssert('Festplatz', (string)$db->query('SELECT location FROM shifts ORDER BY id LIMIT 1')->fetchColumn(), 'Archivvorlage hat strukturierte Schichtangaben nicht wiederhergestellt.');
     eventTestAssert('draft', appSetting($db, 'event_status'), 'Archivvorlage wurde nicht als Entwurf gestartet.');
     eventTestAssert('0', appSetting($db, 'setup_wizard_completed'), 'Archivvorlage wurde fälschlich als vollständig eingerichtet markiert.');
+    eventTestAssert('0', appSetting($db, 'duty_roster_published'), 'Archivvorlage hat eine alte Diensteinteilung freigegeben.');
 
     fwrite(STDOUT, "OK: Veranstaltungsabschluss, Archiv, Vorlage und Datenschutz funktionieren.\n");
 } catch (Throwable $error) {

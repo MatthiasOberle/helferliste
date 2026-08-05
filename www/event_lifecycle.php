@@ -210,6 +210,9 @@ function archiveAndStartNextEvent(PDO $db, string $databaseFile, string $backupD
             $db->exec('DELETE FROM shifts');
         }
         resetEventSettings($db, $options['keep_texts'], $options['keep_design']);
+        // Eine Einteilung der abgeschlossenen Veranstaltung darf nie automatisch
+        // fuer die naechste Veranstaltung sichtbar bleiben.
+        saveAppSetting($db, 'duty_roster_published', '0');
         saveAppSetting($db, 'event_name', $nextEventName);
         saveAppSetting($db, 'event_start_date', $nextStartDate);
         saveAppSetting($db, 'event_end_date', $nextEndDate);
@@ -330,6 +333,7 @@ function startEventFromArchiveTemplate(
         saveAppSetting($db, 'event_name', $eventName);
         saveAppSetting($db, 'event_start_date', $eventStartDate);
         saveAppSetting($db, 'event_end_date', $eventEndDate);
+        saveAppSetting($db, 'duty_roster_published', '0');
         saveAppSetting($db, 'event_status', 'draft');
         saveAppSetting($db, 'setup_wizard_completed', '0');
         $logStmt = $db->prepare("INSERT INTO event_log (created_at, action, detail) VALUES (datetime('now'), 'archive_template_applied', ?)");

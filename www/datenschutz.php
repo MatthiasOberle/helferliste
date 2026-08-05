@@ -55,7 +55,7 @@ $responsibleText = trim($contactName) !== '' ? $contactName : 'die betreibende O
     <div class="card">
         <h2>2. Zweck der Verarbeitung</h2>
         <p>Diese Helferliste dient ausschließlich der Organisation von Helferinnen und Helfern für <?= h($eventText) ?> beziehungsweise vergleichbare Veranstaltungen.</p>
-        <p>Die Daten werden verwendet, um Rückmeldungen zu erfassen, Schichten zu planen, offene Rückmeldungen nachzuverfolgen und die Veranstaltung intern auszuwerten.</p>
+        <p>Die Daten werden verwendet, um Rückmeldungen zu erfassen, Schichten zu planen, offene Rückmeldungen nachzuverfolgen, eine geschützte Diensteinteilung bereitzustellen und die Veranstaltung intern auszuwerten.</p>
     </div>
 
     <div class="card">
@@ -69,30 +69,37 @@ $responsibleText = trim($contactName) !== '' ? $contactName : 'die betreibende O
             <li>ausgewählte Schichten und Springer-Schichten</li>
             <li>freiwillige Hinweise, zum Beispiel Wunschdienst oder Personenwunsch</li>
             <li>technische Zeitpunkte, zum Beispiel Erstellung des Codes, Login, Rückmeldung oder Änderungswunsch</li>
+            <li>bei fehlgeschlagenen Zugriffsversuchen auf die Diensteinteilung ein nicht unmittelbar lesbarer technischer Prüfwert aus IP-Adresse und Browserkennung; die IP-Adresse selbst wird dabei nicht in der Datenbank gespeichert</li>
         </ul>
     </div>
 
     <div class="card">
-        <h2>4. Statistische Auswertung</h2>
+        <h2>4. Geschützte Diensteinteilung</h2>
+        <p>Eine veröffentlichte Diensteinteilung kann Namen und zugewiesene Dienste enthalten. Sie wird nicht unter einer frei aufrufbaren Dateiadresse bereitgestellt. Zugriff erhalten nur Personen, zu deren persönlichem Code bereits eine Rückmeldung gespeichert ist. Das gilt sowohl für „Ich helfe“ als auch für „Ich habe keine Zeit“.</p>
+        <p>Zur Begrenzung wiederholter Fehlversuche wird der technische Prüfwert vorübergehend gespeichert und nach spätestens 24 Stunden automatisch entfernt. Eine erfolgreiche Zugriffsfreigabe gilt höchstens zwei Stunden und wird bei einer Aufhebung der Veröffentlichung sofort unwirksam.</p>
+    </div>
+
+    <div class="card">
+        <h2>5. Statistische Auswertung</h2>
         <p>Zusätzlich werden einfache technische und statistische Daten gespeichert, um nach der Veranstaltung anonym beziehungsweise zusammengefasst auswerten zu können, wie die Helferliste genutzt wurde.</p>
         <p>Dazu gehört insbesondere, ob die Seite ungefähr mit einem Mobilgerät, Tablet oder Desktop-Computer aufgerufen wurde. E-Mail-Öffnungen werden nicht verfolgt. Der vollständige User-Agent wird nicht gespeichert. Es wird daraus keine öffentliche personenbezogene Auswertung erstellt.</p>
     </div>
 
 
     <div class="card">
-        <h2>5. Zugriff auf die Daten</h2>
+        <h2>6. Zugriff auf die Daten</h2>
         <p>Die Anwendung läuft auf einem von der betreibenden Organisation gewählten Server. Zugriff auf den Administrationsbereich und die gespeicherten Daten haben nur <?= h($responsibleText) ?> beziehungsweise ausdrücklich berechtigte Administratoren.</p>
         <p>Die Daten werden nicht verkauft und nicht für Werbung verwendet.</p>
     </div>
 
     <div class="card">
-        <h2>6. Löschung der Daten</h2>
+        <h2>7. Löschung der Daten</h2>
         <p>Nach Abschluss der Veranstaltung können die Eventdaten im Adminbereich gelöscht werden. Dabei werden insbesondere Rückmeldungen, E-Mail-Adressen, Zugangscodes, Änderungswünsche und Aufrufstatistiken entfernt. Die betreibende Organisation legt die konkrete Aufbewahrungsdauer fest und dokumentiert sie in ihren Datenschutzhinweisen.</p>
         <p>Die Schichtvorlagen können erhalten bleiben, damit die Helferliste für spätere Veranstaltungen erneut genutzt werden kann.</p>
     </div>
 
     <div class="card">
-        <h2>7. Auskunft und Berichtigung</h2>
+        <h2>8. Auskunft und Berichtigung</h2>
         <p>Betroffene Personen können eine Auskunft oder Berichtigung ihrer gespeicherten Daten anfragen. Änderungen an bereits gespeicherten Rückmeldungen erfolgen nicht automatisch, sondern über einen Änderungswunsch oder direkte Rücksprache.</p>
     </div>
 

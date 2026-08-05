@@ -148,6 +148,136 @@ additional_shift_id="$(sqlite3 "${database_file}" "SELECT id FROM shifts WHERE a
 [[ -n "${entry_id}" ]]
 [[ -n "${additional_shift_id}" ]]
 
+# Geschützte Diensteinteilung: Admin-Upload, öffentliche Berechtigung,
+# serverseitige Sperre und PDF-Auslieferung.
+roster_pdf="${test_root}/diensteinteilung-test.pdf"
+printf '%s\n' '%PDF-1.4' '1 0 obj' '<< /Type /Catalog >>' 'endobj' 'trailer' '<< /Root 1 0 R >>' '%%EOF' > "${roster_pdf}"
+
+roster_admin_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/roster-admin.html" -w '%{http_code}' "http://127.0.0.1:${test_port}/duty_roster_admin.php")"
+[[ "${roster_admin_status}" == "200" ]]
+grep -q 'Diensteinteilung' "${test_root}/roster-admin.html"
+roster_admin_csrf="$(sed -n 's/.*name="csrf_token" value="\([^"]*\)".*/\1/p' "${test_root}/roster-admin.html" | head -n 1)"
+[[ -n "${roster_admin_csrf}" ]]
+
+printf 'keine pdf' > "${test_root}/keine-pdf.pdf"
+invalid_roster_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/roster-invalid.html" -w '%{http_code}' \
+  -F "csrf_token=${roster_admin_csrf}" \
+  -F 'action=upload' \
+  -F "duty_roster_pdf=@${test_root}/keine-pdf.pdf;type=application/pdf" \
+  "http://127.0.0.1:${test_port}/duty_roster_admin.php")"
+[[ "${invalid_roster_status}" == "200" ]]
+grep -q 'nicht als PDF erkannt' "${test_root}/roster-invalid.html"
+[[ ! -e "${test_root}/data/duty-roster/current.pdf" ]]
+
+premature_roster_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/roster-premature.html" -w '%{http_code}' \
+  -F "csrf_token=${roster_admin_csrf}" \
+  -F 'action=upload' \
+  -F 'publish_after_upload=1' \
+  -F "duty_roster_pdf=@${roster_pdf};type=application/pdf" \
+  "http://127.0.0.1:${test_port}/duty_roster_admin.php")"
+[[ "${premature_roster_status}" == "200" ]]
+grep -q 'erst veröffentlicht werden, wenn die Veranstaltung abgeschlossen' "${test_root}/roster-premature.html"
+[[ ! -e "${test_root}/data/duty-roster/current.pdf" ]]
+
+sqlite3 "${database_file}" "INSERT OR REPLACE INTO app_settings (setting_key, setting_value, updated_at) VALUES ('event_status', 'closed', datetime('now'));"
+
+upload_roster_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/roster-upload.html" -w '%{http_code}' \
+  -F "csrf_token=${roster_admin_csrf}" \
+  -F 'action=upload' \
+  -F 'publish_after_upload=1' \
+  -F "duty_roster_pdf=@${roster_pdf};type=application/pdf" \
+  "http://127.0.0.1:${test_port}/duty_roster_admin.php")"
+[[ "${upload_roster_status}" == "200" ]]
+grep -q 'sicher hochgeladen und veröffentlicht' "${test_root}/roster-upload.html"
+[[ -f "${test_root}/data/duty-roster/current.pdf" ]]
+[[ ! -e "${test_root}/www/data/duty-roster/current.pdf" ]]
+[[ "$(sha256sum "${roster_pdf}" | awk '{print $1}')" == "$(sha256sum "${test_root}/data/duty-roster/current.pdf" | awk '{print $1}')" ]]
+
+sqlite3 "${database_file}" "
+  INSERT INTO access_codes (email, code, created_at) VALUES ('ohne-rueckmeldung@example.org', '8181', datetime('now'));
+  INSERT INTO access_codes (email, code, created_at) VALUES ('absage@example.org', '9191', datetime('now'));
+  INSERT INTO entries (name, status, created_at, access_code_id) VALUES ('Absage Beispiel', 'no_time', datetime('now'), last_insert_rowid());
+"
+
+closed_public_status="$(curl -sS -o "${test_root}/closed-public.html" -w '%{http_code}' "http://127.0.0.1:${test_port}/")"
+[[ "${closed_public_status}" == "200" ]]
+grep -q 'Diensteinteilung ansehen' "${test_root}/closed-public.html"
+! grep -q 'name="status"' "${test_root}/closed-public.html"
+
+roster_public_status="$(curl -sS -c "${test_root}/roster-user-cookies.txt" -o "${test_root}/roster-public.html" -w '%{http_code}' "http://127.0.0.1:${test_port}/duty_roster.php")"
+[[ "${roster_public_status}" == "200" ]]
+roster_public_csrf="$(sed -n 's/.*name="csrf_token" value="\([^"]*\)".*/\1/p' "${test_root}/roster-public.html" | head -n 1)"
+[[ -n "${roster_public_csrf}" ]]
+
+unused_login_status="$(curl -sS -b "${test_root}/roster-user-cookies.txt" -c "${test_root}/roster-user-cookies.txt" -o "${test_root}/roster-unused.html" -w '%{http_code}' \
+  --data-urlencode 'action=login' \
+  --data-urlencode "csrf_token=${roster_public_csrf}" \
+  --data-urlencode 'access=8181' \
+  "http://127.0.0.1:${test_port}/duty_roster.php")"
+[[ "${unused_login_status}" == "200" ]]
+grep -q 'Zugriff ist mit diesen Angaben nicht möglich' "${test_root}/roster-unused.html"
+
+valid_login_status="$(curl -sS -D "${test_root}/roster-login-headers.txt" -b "${test_root}/roster-user-cookies.txt" -c "${test_root}/roster-user-cookies.txt" -o /dev/null -w '%{http_code}' \
+  --data-urlencode 'action=login' \
+  --data-urlencode "csrf_token=${roster_public_csrf}" \
+  --data-urlencode 'access=7171' \
+  "http://127.0.0.1:${test_port}/duty_roster.php")"
+[[ "${valid_login_status}" == "302" ]]
+grep -qi '^Location: duty_roster.php' "${test_root}/roster-login-headers.txt"
+
+roster_file_status="$(curl -sS -D "${test_root}/roster-file-headers.txt" -b "${test_root}/roster-user-cookies.txt" -o "${test_root}/roster-file.pdf" -w '%{http_code}' "http://127.0.0.1:${test_port}/duty_roster_file.php")"
+[[ "${roster_file_status}" == "200" ]]
+grep -qi '^Content-Type: application/pdf' "${test_root}/roster-file-headers.txt"
+grep -qi '^Cache-Control: private, no-store' "${test_root}/roster-file-headers.txt"
+grep -qi '^X-Content-Type-Options: nosniff' "${test_root}/roster-file-headers.txt"
+[[ "$(sha256sum "${roster_pdf}" | awk '{print $1}')" == "$(sha256sum "${test_root}/roster-file.pdf" | awk '{print $1}')" ]]
+
+denied_file_status="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:${test_port}/duty_roster_file.php")"
+[[ "${denied_file_status}" == "403" ]]
+
+curl -sS -A 'Rate-Limit-Test' -c "${test_root}/rate-cookies.txt" -o "${test_root}/rate-start.html" "http://127.0.0.1:${test_port}/duty_roster.php"
+rate_csrf="$(sed -n 's/.*name="csrf_token" value="\([^"]*\)".*/\1/p' "${test_root}/rate-start.html" | head -n 1)"
+for failed_attempt in 1 2 3 4 5; do
+  curl -sS -A 'Rate-Limit-Test' -b "${test_root}/rate-cookies.txt" -c "${test_root}/rate-cookies.txt" -o "${test_root}/rate-${failed_attempt}.html" \
+    --data-urlencode 'action=login' \
+    --data-urlencode "csrf_token=${rate_csrf}" \
+    --data-urlencode 'access=0000' \
+    "http://127.0.0.1:${test_port}/duty_roster.php"
+done
+curl -sS -A 'Rate-Limit-Test' -b "${test_root}/rate-cookies.txt" -c "${test_root}/rate-cookies.txt" -o "${test_root}/rate-blocked.html" \
+  --data-urlencode 'action=login' \
+  --data-urlencode "csrf_token=${rate_csrf}" \
+  --data-urlencode 'access=0000' \
+  "http://127.0.0.1:${test_port}/duty_roster.php"
+grep -q 'Zu viele Fehlversuche' "${test_root}/rate-blocked.html"
+
+roster_admin_csrf="$(sed -n 's/.*name="csrf_token" value="\([^"]*\)".*/\1/p' "${test_root}/roster-upload.html" | head -n 1)"
+unpublish_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/roster-unpublished.html" -w '%{http_code}' \
+  --data-urlencode "csrf_token=${roster_admin_csrf}" \
+  --data-urlencode 'action=set_publication' \
+  --data-urlencode 'published=0' \
+  "http://127.0.0.1:${test_port}/duty_roster_admin.php")"
+[[ "${unpublish_status}" == "200" ]]
+[[ "$(curl -sS -b "${test_root}/roster-user-cookies.txt" -o /dev/null -w '%{http_code}' "http://127.0.0.1:${test_port}/duty_roster_file.php")" == "403" ]]
+
+republish_csrf="$(sed -n 's/.*name="csrf_token" value="\([^"]*\)".*/\1/p' "${test_root}/roster-unpublished.html" | head -n 1)"
+curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/roster-republished.html" \
+  --data-urlencode "csrf_token=${republish_csrf}" \
+  --data-urlencode 'action=set_publication' \
+  --data-urlencode 'published=1' \
+  "http://127.0.0.1:${test_port}/duty_roster_admin.php"
+grep -q 'jetzt veröffentlicht' "${test_root}/roster-republished.html"
+
+no_time_cookies="${test_root}/roster-no-time-cookies.txt"
+curl -sS -c "${no_time_cookies}" -o "${test_root}/roster-no-time-start.html" "http://127.0.0.1:${test_port}/duty_roster.php"
+no_time_csrf="$(sed -n 's/.*name="csrf_token" value="\([^"]*\)".*/\1/p' "${test_root}/roster-no-time-start.html" | head -n 1)"
+[[ "$(curl -sS -b "${no_time_cookies}" -c "${no_time_cookies}" -o /dev/null -w '%{http_code}' \
+  --data-urlencode 'action=login' \
+  --data-urlencode "csrf_token=${no_time_csrf}" \
+  --data-urlencode 'access=absage@example.org' \
+  "http://127.0.0.1:${test_port}/duty_roster.php")" == "302" ]]
+[[ "$(curl -sS -b "${no_time_cookies}" -o /dev/null -w '%{http_code}' "http://127.0.0.1:${test_port}/duty_roster_file.php")" == "200" ]]
+
 edit_entry_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/edit-entry.html" -w '%{http_code}' "http://127.0.0.1:${test_port}/edit_entry.php?id=${entry_id}")"
 [[ "${edit_entry_status}" == "200" ]]
 edit_entry_csrf="$(sed -n 's/.*name="csrf_token" value="\([^"]*\)".*/\1/p' "${test_root}/edit-entry.html" | head -n 1)"

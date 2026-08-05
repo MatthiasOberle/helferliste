@@ -109,7 +109,21 @@ Mit `Jetzt drucken` öffnet sich die Druckvorschau des Browsers. Dort kann die A
 
 Ausdrucke enthalten trotzdem personenbezogene Namen. Nur berechtigte Personen dürfen sie erhalten. Nach dem Einsatz müssen sie entsprechend der festgelegten Aufbewahrung sicher verwahrt oder vernichtet werden.
 
-## 9. Betrieb und Veranstaltungsende
+## 9. Diensteinteilung bereitstellen
+
+Unter `Auswertung → Diensteinteilung` kann genau eine PDF bis 10 MB hochgeladen, ersetzt, geprüft, veröffentlicht oder gelöscht werden. Die Datei liegt außerhalb des öffentlichen Webordners und wird nur über eine vorherige Berechtigungsprüfung ausgeliefert.
+
+Vor der Veröffentlichung:
+
+1. Veranstaltung auf `Abgeschlossen` setzen, damit keine neuen Rückmeldungen mehr möglich sind.
+2. PDF im Adminbereich hochladen und dort über `PDF prüfen` kontrollieren.
+3. Öffentliche Erklärung prüfen und die PDF erst danach veröffentlichen.
+4. Zugriff mit einem Code einer bereits gespeicherten Zusage und einer gespeicherten Absage testen.
+5. Prüfen, dass ein unbenutzter Code keinen Zugriff erhält.
+
+Der öffentliche Zugriff funktioniert per persönlichem Code oder hinterlegter E-Mail-Adresse, wenn bereits eine Rückmeldung gespeichert ist. Eine spätere Aufhebung der Veröffentlichung sperrt auch bestehende Zugriffsfreigaben sofort. Beim Start der nächsten Veranstaltung wird die bisherige PDF automatisch unveröffentlicht.
+
+## 10. Betrieb und Veranstaltungsende
 
 - Datenbank und Uploads regelmäßig sichern.
 - Adminzugang nur berechtigten Personen geben.
