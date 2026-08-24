@@ -59,5 +59,11 @@ jobs:
       - name: Schichtplan und Anwesenheitslisten prüfen
         run: php tests/print_lists.php
 
+      - name: Einladungen und Erinnerungen prüfen
+        run: php tests/invitations.php
+
+      - name: Lokale QR-Erzeugung prüfen
+        run: node --check www/assets/vendor/qrcodegen.js
+
       - name: Sichere Admin-Ersteinrichtung prüfen
         run: bash tests/http_admin_setup.sh

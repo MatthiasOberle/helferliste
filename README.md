@@ -12,7 +12,7 @@ Helfer benötigen kein Benutzerkonto und keine App. Ein persönlicher vierstelli
 
 Die Helferliste ist kein abgeschlossenes Archivprojekt. Ich entwickle sie Schritt für Schritt zu einem Werkzeug weiter, das sich auch außerhalb der Feuerwehr einfach einsetzen lässt.
 
-Im aktuellen Produktstand sind bereits eine geführte Ersteinrichtung, sichere Datenbankaktualisierungen, Veranstaltungsarchive, deutlich flexiblere Schichten und ein geprüfter CSV-Kontaktimport hinzugekommen. Neue Funktionen werden zuerst im Entwicklungszweig praktisch getestet und laufen automatisch unter PHP 8.3, 8.4 und 8.5 durch. Fertige Arbeitspakete werden anschließend über einen Pull Request in den geschützten Hauptzweig übernommen.
+Im aktuellen Produktstand sind bereits eine geführte Ersteinrichtung, sichere Datenbankaktualisierungen, Veranstaltungsarchive, flexible Schichten, ein geprüfter CSV-Kontaktimport sowie anbieterneutrale Einladungs- und Erinnerungswerkzeuge hinzugekommen. Neue Funktionen werden zuerst im Entwicklungszweig praktisch getestet und laufen automatisch unter PHP 8.3, 8.4 und 8.5 durch. Fertige Arbeitspakete werden anschließend über einen Pull Request in den geschützten Hauptzweig übernommen.
 
 ## Einblicke
 
@@ -59,7 +59,11 @@ Alle abgebildeten Namen, E-Mail-Adressen, Codes und Veranstaltungsangaben sind f
 - Schichten mit allen Angaben duplizieren
 - Zugangscodes einzeln oder aus E-Mail-Listen erzeugen
 - Kontakte aus CSV-Dateien mit Vorschau und Dublettenprüfung importieren
-- persönliche Einladungslinks kopieren
+- persönliche Einladungs- und Erinnerungstexte anpassen und kopieren
+- einzelne Nachricht im vorhandenen E-Mail-Programm öffnen
+- Kontakte nach ausstehender Rückmeldung, Zusage oder Absage filtern
+- persönliche Direktlinks, lokal erzeugte QR-Codes und druckbare Einladungskarten verwenden
+- kein automatischer Versand und kein Öffnungstracking ohne ausdrückliche spätere Einrichtung
 - ungenutzte Codes bereinigen
 - Veranstaltung kontrolliert abschließen und aktive Daten zurücksetzen
 - Admin-Passwort in der Oberfläche ändern
@@ -162,6 +166,7 @@ Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php`
 │   ├── setup_wizard.php
 │   ├── contact_import.php
 │   ├── print_lists.php
+│   ├── invitations.php
 │   └── http_admin_setup.sh
 ├── INSTALL.md
 ├── CONFIGURATION.md
@@ -169,6 +174,7 @@ Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php`
 ├── CONTRIBUTING.md
 ├── CHANGELOG.md
 ├── LICENSE
+├── THIRD_PARTY_LICENSES.md
 ├── Install/
 │   ├── database_schema.sql
 │   ├── migration_lib.php
@@ -179,7 +185,8 @@ Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php`
 │   │   ├── 001_baseline.sql
 │   │   ├── 002_secure_admin_setup.sql
 │   │   ├── 003_event_archives.sql
-│   │   └── 004_event_schedule_and_shift_fields.sql
+│   │   ├── 004_event_schedule_and_shift_fields.sql
+│   │   └── 005_duty_roster_access.sql
 │   ├── install_helferliste.sh
 │   └── install_helferliste_windows.bat
 └── www/
@@ -189,6 +196,8 @@ Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php`
     ├── setup_wizard.php
     ├── setup_wizard_lib.php
     ├── contact_import_lib.php
+    ├── invitations.php
+    ├── invitations_lib.php
     ├── print_lists.php
     ├── print_lists_lib.php
     ├── event_archive.php
@@ -199,7 +208,8 @@ Die Anwendung führt eine eigene Datenbank-Schema-Version. `Install/migrate.php`
         ├── hlf20.png
         ├── hero-thw.png
         ├── hero-notarzt.png
-        └── uploads/
+        ├── uploads/
+        └── vendor/qrcodegen.js
 ```
 
 Auf einem empfohlenen Linux-Server wird `www/` nach `/var/www/helferliste/public/` kopiert. Die Datenbank liegt getrennt im nicht öffentlichen Ordner `/var/www/helferliste/data/`.
@@ -222,4 +232,4 @@ Die geplanten Ausbaustufen stehen in der [Produkt-Roadmap](ROADMAP.md).
 
 ## Lizenz
 
-Dieses Projekt steht unter der [MIT-Lizenz](LICENSE).
+Dieses Projekt steht unter der [MIT-Lizenz](LICENSE). Hinweise zur eingebundenen QR-Code-Bibliothek stehen in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).

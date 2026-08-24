@@ -88,6 +88,18 @@ Für den CSV-Import:
 
 Komma, Semikolon und Tabulator werden automatisch erkannt. Weitere Spalten wie Name, Organisation oder Gruppe werden aus Gründen der Datenminimierung nicht gespeichert. Die Datei darf höchstens 1.000 Datenzeilen und 2 MB enthalten. Sie wird nicht dauerhaft auf dem Server abgelegt.
 
+Unter `Verwaltung → Einladen & erinnern` stehen anschließend bereit:
+
+- Filter für Kontakte ohne Rückmeldung, mit Zusage, mit Absage oder für alle Kontakte;
+- anpassbare Einladungs- und Erinnerungstexte;
+- Platzhalter für Veranstaltung, Organisation, Zeitraum, persönlichen Link und Code;
+- einzelne Übergabe an das auf dem Gerät vorhandene E-Mail-Programm;
+- kopierfertiger Text, persönlicher QR-Code und druckbare Einladungskarte.
+
+Die Helferliste versendet dabei selbst keine Nachricht und führt kein Öffnungs- oder Versandtracking. Ob eine E-Mail tatsächlich verschickt oder gelesen wurde, wird nicht behauptet. Erinnerungen werden nur bei Kontakten ohne gespeicherte Rückmeldung angeboten.
+
+QR-Codes werden im Browser erzeugt. Persönliche Links, Codes und E-Mail-Adressen werden dafür nicht an einen externen QR-Dienst übertragen. Direktlinks und QR-Codes sind persönliche Zugangsmittel und dürfen nicht in öffentliche Gruppen, Webseiten oder soziale Netzwerke gestellt werden.
+
 Vor dem Versand:
 
 - Basis-URL prüfen
@@ -97,6 +109,8 @@ Vor dem Versand:
 - volle Schicht testen
 - Änderungswunsch testen
 - Export kontrollieren
+- Einladung und Erinnerung mit einem erfundenen Testkontakt prüfen
+- QR-Code mit einem zweiten Gerät scannen und Zieladresse kontrollieren
 
 ## 8. Schichtplan und Anwesenheitslisten drucken
 

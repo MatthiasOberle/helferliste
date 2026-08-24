@@ -13,6 +13,11 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
+// Persönliche Direktlinks werden sofort aus der URL entfernt und dürfen weder
+// zwischengespeichert noch als Referrer an andere Seiten weitergegeben werden.
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Referrer-Policy: no-referrer');
+
 $db = new PDO('sqlite:' . __DIR__ . '/../data/helferliste.sqlite');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 

@@ -148,6 +148,53 @@ additional_shift_id="$(sqlite3 "${database_file}" "SELECT id FROM shifts WHERE a
 [[ -n "${entry_id}" ]]
 [[ -n "${additional_shift_id}" ]]
 
+unauthorized_invitations_status="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:${test_port}/invitations.php")"
+[[ "${unauthorized_invitations_status}" == "302" ]]
+
+invitations_status="$(curl -sS -D "${test_root}/invitations-headers.txt" -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/invitations.html" -w '%{http_code}' "http://127.0.0.1:${test_port}/invitations.php?filter=pending")"
+[[ "${invitations_status}" == "200" ]]
+grep -qi '^Cache-Control: no-store' "${test_root}/invitations-headers.txt"
+grep -qi '^Referrer-Policy: no-referrer' "${test_root}/invitations-headers.txt"
+grep -q 'Einladen &amp; erinnern' "${test_root}/invitations.html"
+grep -q 'csv-eins@example.org' "${test_root}/invitations.html"
+grep -q 'Noch keine Rückmeldung' "${test_root}/invitations.html"
+grep -q 'assets/vendor/qrcodegen.js' "${test_root}/invitations.html"
+invitations_csrf="$(sed -n 's/.*name="csrf_token" value="\([^"]*\)".*/\1/p' "${test_root}/invitations.html" | head -n 1)"
+[[ -n "${invitations_csrf}" ]]
+
+template_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/invitations-saved.html" -w '%{http_code}' \
+  --data-urlencode "csrf_token=${invitations_csrf}" \
+  --data-urlencode 'action=save_templates' \
+  --data-urlencode 'invitation_subject=Persönliche Einladung zu {veranstaltung}' \
+  --data-urlencode $'invitation_body=Hallo,\n\nbitte antworte hier: {link}\n\n{organisation}' \
+  --data-urlencode 'reminder_subject=Kurze Erinnerung zu {veranstaltung}' \
+  --data-urlencode $'reminder_body=Hallo,\n\nuns fehlt noch deine Rückmeldung: {link}\nCode: {code}' \
+  "http://127.0.0.1:${test_port}/invitations.php?filter=pending")"
+[[ "${template_status}" == "200" ]]
+grep -q 'Einladungs- und Erinnerungstexte wurden gespeichert' "${test_root}/invitations-saved.html"
+[[ "$(sqlite3 "${database_file}" "SELECT setting_value FROM app_settings WHERE setting_key='invitation_subject';")" == 'Persönliche Einladung zu {veranstaltung}' ]]
+
+pending_card_id="$(sqlite3 "${database_file}" "SELECT id FROM access_codes WHERE email='csv-eins@example.org';")"
+card_status="$(curl -sS -b "${test_root}/cookies.txt" -o "${test_root}/invitation-card.html" -w '%{http_code}' "http://127.0.0.1:${test_port}/invitations.php?card=${pending_card_id}&kind=reminder")"
+[[ "${card_status}" == "200" ]]
+grep -q 'Kurze Erinnerung zu HTTP Testfest 2026' "${test_root}/invitation-card.html"
+grep -q 'index.php?code=' "${test_root}/invitation-card.html"
+grep -q 'csv-eins@example.org' "${test_root}/invitation-card.html"
+! grep -q 'http@example.org' "${test_root}/invitation-card.html"
+
+qr_script_status="$(curl -sS -o "${test_root}/qrcodegen.js" -w '%{http_code}' "http://127.0.0.1:${test_port}/assets/vendor/qrcodegen.js")"
+[[ "${qr_script_status}" == "200" ]]
+grep -q 'Project Nayuki. (MIT License)' "${test_root}/qrcodegen.js"
+
+direct_link_status="$(curl -sS -D "${test_root}/direct-link-headers.txt" -c "${test_root}/direct-link-cookies.txt" -o /dev/null -w '%{http_code}' "http://127.0.0.1:${test_port}/index.php?code=7171")"
+[[ "${direct_link_status}" == "302" ]]
+grep -qi '^Location: index.php' "${test_root}/direct-link-headers.txt"
+grep -qi '^Cache-Control: no-store' "${test_root}/direct-link-headers.txt"
+grep -qi '^Referrer-Policy: no-referrer' "${test_root}/direct-link-headers.txt"
+direct_link_clean_status="$(curl -sS -b "${test_root}/direct-link-cookies.txt" -o "${test_root}/direct-link-clean.html" -w '%{http_code}' "http://127.0.0.1:${test_port}/index.php")"
+[[ "${direct_link_clean_status}" == "200" ]]
+grep -q 'Deine Rückmeldung' "${test_root}/direct-link-clean.html"
+
 # Geschützte Diensteinteilung: Admin-Upload, öffentliche Berechtigung,
 # serverseitige Sperre und PDF-Auslieferung.
 roster_pdf="${test_root}/diensteinteilung-test.pdf"
@@ -392,4 +439,4 @@ after_reset_status="$(curl -sS -b "${test_root}/cookies.txt" -o "${test_root}/af
 [[ "${after_reset_status}" == "200" ]]
 grep -q 'Sichere Ersteinrichtung' "${test_root}/after-reset.html"
 
-echo 'OK: Adminzugang, Einrichtungsassistent, CSV-Import, manuelle Schichtzuordnung, Drucklisten, Veranstaltungsabschluss, öffentliche Seite, Export, Reset und Sitzungsentzug funktionieren.'
+echo 'OK: Adminzugang, Einrichtungsassistent, CSV-Import, Einladungen, Erinnerungen, manuelle Schichtzuordnung, Drucklisten, Veranstaltungsabschluss, öffentliche Seite, Export, Reset und Sitzungsentzug funktionieren.'

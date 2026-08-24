@@ -40,6 +40,7 @@ try {
     saveAppSetting($db, 'setup_wizard_completed', '1');
     saveAppSetting($db, 'duty_roster_published', '1');
     saveAppSetting($db, 'text_login_heading', 'Eigene Einladung');
+    saveAppSetting($db, 'invitation_subject', 'Eigene Einladung zu {veranstaltung}');
     saveAppSetting($db, 'primary_color', '#123456');
     $db->exec("UPDATE shifts SET shift_date = '2026-07-10', start_time = '16:00', end_time = '20:00', location = 'Festplatz', note = 'Bitte Handschuhe mitbringen' WHERE id = 1");
     $db->exec("INSERT INTO access_codes (email, code, created_at) VALUES ('erika@example.org', '4242', datetime('now'))");
@@ -73,6 +74,7 @@ try {
     eventTestAssert('0', eventSetting($db, 'duty_roster_published'), 'Alte Diensteinteilung wurde für die neue Veranstaltung nicht gesperrt.');
     eventTestAssert(3, (int)$db->query('SELECT COUNT(*) FROM shifts')->fetchColumn(), 'Schichtvorlage wurde nicht übernommen.');
     eventTestAssert('Eigene Einladung', eventSetting($db, 'text_login_heading'), 'Seitentexte wurden nicht übernommen.');
+    eventTestAssert('Eigene Einladung zu {veranstaltung}', eventSetting($db, 'invitation_subject'), 'Einladungsvorlage wurde nicht übernommen.');
     eventTestAssert('#123456', eventSetting($db, 'primary_color'), 'Design wurde nicht übernommen.');
 
     $archive = $db->query('SELECT * FROM event_archives LIMIT 1')->fetch(PDO::FETCH_ASSOC);
@@ -100,6 +102,7 @@ try {
     ]);
     eventTestAssert(0, (int)$db->query('SELECT COUNT(*) FROM shifts')->fetchColumn(), 'Abgewählte Schichtvorlage wurde dennoch übernommen.');
     eventTestAssert(appDefaults()['text_login_heading'], appSetting($db, 'text_login_heading'), 'Seitentexte wurden nicht auf Standard zurückgesetzt.');
+    eventTestAssert(appDefaults()['invitation_subject'], appSetting($db, 'invitation_subject'), 'Einladungsvorlage wurde nicht auf Standard zurückgesetzt.');
     eventTestAssert(appDefaults()['primary_color'], appSetting($db, 'primary_color'), 'Design wurde nicht auf Standard zurückgesetzt.');
     eventTestAssert(0, (int)$db->query('SELECT includes_personal_data FROM event_archives ORDER BY id DESC LIMIT 1')->fetchColumn(), 'Anonymes Archiv enthält Personendaten.');
     eventTestAssert('ok', (string)$db->query('PRAGMA quick_check')->fetchColumn(), 'Datenbank ist nach Veranstaltungsabschluss nicht integer.');
@@ -115,6 +118,7 @@ try {
     eventTestAssert('Aus Archivvorlage 2028', eventSetting($db, 'event_name'), 'Veranstaltungsname aus Vorlagenstart fehlt.');
     eventTestAssert(3, (int)$db->query('SELECT COUNT(*) FROM shifts')->fetchColumn(), 'Archivvorlage hat Schichten nicht wiederhergestellt.');
     eventTestAssert('Eigene Einladung', appSetting($db, 'text_login_heading'), 'Archivvorlage hat Seitentexte nicht wiederhergestellt.');
+    eventTestAssert('Eigene Einladung zu {veranstaltung}', appSetting($db, 'invitation_subject'), 'Archivvorlage hat die Einladungsvorlage nicht wiederhergestellt.');
     eventTestAssert('#123456', appSetting($db, 'primary_color'), 'Archivvorlage hat Design nicht wiederhergestellt.');
     eventTestAssert('Festplatz', (string)$db->query('SELECT location FROM shifts ORDER BY id LIMIT 1')->fetchColumn(), 'Archivvorlage hat strukturierte Schichtangaben nicht wiederhergestellt.');
     eventTestAssert('draft', appSetting($db, 'event_status'), 'Archivvorlage wurde nicht als Entwurf gestartet.');
