@@ -412,6 +412,7 @@ $openRequests = (int)$db->query("SELECT COUNT(*) FROM change_requests WHERE stat
         <p class="muted">Die wichtigsten Bereiche liegen jetzt gebündelt oben im Menü. Texte, Infotext, Impressum und Datenschutz findest du unter „Einstellungen“.</p>
         <div class="buttons">
             <a class="btn secondary" href="codes.php">Zugangscodes verwalten</a>
+            <a class="btn secondary" href="invitations.php">Einladen & erinnern</a>
             <a class="btn secondary" href="edit_shifts.php">Schichten bearbeiten</a>
             <a class="btn secondary" href="export.php">Export öffnen</a>
             <a class="btn secondary" href="print_lists.php">Drucklisten öffnen</a>

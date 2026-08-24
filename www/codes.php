@@ -215,6 +215,12 @@ $rows = $db->query("SELECT ac.*, e.id AS entry_id, e.name AS entry_name, e.statu
         <?php adminNav('codes'); ?>
     </div>
 
+    <div class="card">
+        <h2>Einladungen vorbereiten</h2>
+        <p>Persönliche Einladungs- und Erinnerungstexte, Direktlinks und QR-Codes stehen im eigenen Arbeitsbereich bereit.</p>
+        <a class="btn secondary" href="invitations.php">Einladen & erinnern öffnen</a>
+    </div>
+
     <?php if ($message !== ''): ?><div class="notice success"><?= h($message) ?></div><?php endif; ?>
     <?php if ($error !== ''): ?><div class="notice error"><?= h($error) ?></div><?php endif; ?>
 

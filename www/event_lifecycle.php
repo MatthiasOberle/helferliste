@@ -127,7 +127,11 @@ function resetEventSettings(PDO $db, bool $keepTexts, bool $keepDesign): void
         'card_background_color', 'muted_text_color', 'font_family', 'occupancy_color_low',
         'occupancy_color_medium', 'occupancy_color_high', 'occupancy_color_full',
     ];
-    $textKeys = ['public_login_info_text'];
+    $textKeys = [
+        'public_login_info_text',
+        'invitation_subject', 'invitation_body',
+        'reminder_subject', 'reminder_body',
+    ];
     foreach (array_keys(appDefaults()) as $key) {
         if (str_starts_with($key, 'text_')) {
             $textKeys[] = $key;

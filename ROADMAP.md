@@ -59,7 +59,7 @@ Ziel: Einladungen lassen sich schnell verteilen, ohne einen bestimmten E-Mail-An
 - QR-Code und Direktlink pro Einladung
 - kopierfertige Einladungs- und Erinnerungstexte
 - Filter für Personen ohne Rückmeldung
-- optionaler SMTP-Versand mit klarer Zustell- und Fehleranzeige
+- optionaler SMTP-Versand mit klarer Zustell- und Fehleranzeige; bleibt bewusst eine spätere Erweiterung
 - kein Versand und kein Tracking ohne ausdrückliche Einrichtung des Betreibers
 
 ## Stufe 4: Optionale Erweiterungen
@@ -105,7 +105,9 @@ Abgeschlossen:
 - CSV-Import für Kontakte mit Vorschau, Dublettenprüfung und automatischer Code-Erzeugung umgesetzt
 - Druckansichten für Schichtplan und Anwesenheitslisten umgesetzt
 - geschützte PDF-Diensteinteilung mit kontrollierter Freigabe nach abgegebener Rückmeldung umgesetzt
+- anbieterneutrale Einladungen und Erinnerungen mit persönlichen Direktlinks, lokalen QR-Codes, anpassbaren Texten und Rückmeldestatus umgesetzt
+- automatischen Versand und Öffnungstracking bewusst nicht aktiviert
 
 Als Nächstes:
 
-1. Einladungs- und Erinnerungswerkzeuge ausbauen.
+1. Erfahrungen aus den nächsten Praxiseinsätzen sammeln und die optionalen Erweiterungen danach priorisieren.

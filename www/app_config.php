@@ -45,6 +45,10 @@ function appDefaults(): array {
         'text_event_closed_notice' => 'Die Rückmeldung für diese Veranstaltung ist beendet.',
         'duty_roster_public_heading' => 'Diensteinteilung',
         'duty_roster_public_intro' => 'Die finale Diensteinteilung ist verfügbar. Gib deinen persönlichen Code oder deine hinterlegte E-Mail-Adresse ein.',
+        'invitation_subject' => 'Einladung zur Helferliste: {veranstaltung}',
+        'invitation_body' => "Hallo,\n\nfür {veranstaltung} bitten wir um deine Rückmeldung.\n\nPersönlicher Link: {link}\nAlternativ kannst du den Code {code} eingeben.\n\nViele Grüße\n{organisation}",
+        'reminder_subject' => 'Erinnerung: Rückmeldung für {veranstaltung}',
+        'reminder_body' => "Hallo,\n\nfür {veranstaltung} fehlt uns noch deine Rückmeldung. Bitte teile uns kurz mit, ob und wann du helfen kannst.\n\nPersönlicher Link: {link}\nAlternativ kannst du den Code {code} eingeben.\n\nVielen Dank\n{organisation}",
         'text_login_intro' => 'Bitte gib zuerst deinen persönlichen vierstelligen Code aus der Einladung ein.',
         'text_code_label' => 'Dein Zugangscode',
         'text_code_help' => 'Den Code findest du in der Einladung. Danach kannst du dich eintragen.',
@@ -377,6 +381,7 @@ function adminNav(string $active = ''): void {
     $groups = [
         'Verwaltung' => [
             'codes.php' => ['Zugangscodes', 'codes'],
+            'invitations.php' => ['Einladen & erinnern', 'invitations'],
             'edit_shifts.php' => ['Schichten', 'shifts'],
         ],
         'Auswertung' => [
@@ -555,6 +560,7 @@ function adminNav(string $active = ''): void {
 $adminViewScripts = [
     'admin.php',
     'codes.php',
+    'invitations.php',
     'stats.php',
     'export.php',
     'print_lists.php',

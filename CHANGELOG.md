@@ -17,12 +17,19 @@ Alle wichtigen Änderungen dieses Projekts werden hier dokumentiert.
 - Linux- und Windows-Installer auf den gemeinsamen Migrationsmechanismus umgestellt
 - allgemein bekanntes Standardpasswort durch einmaligen, zufälligen Einrichtungscode ersetzt
 - Mindestlänge für neue Admin-Passwörter auf 12 Zeichen angehoben
-- Entwicklungsstand auf `1.7.0-dev` und Datenbankschema 5 angehoben
+- Entwicklungsstand auf `1.8.0-dev` bei unverändertem Datenbankschema 5 angehoben
 - Beispielschichten von der Veröffentlichungsbereitschaft ausgeschlossen
 - neue Installationen bis zum Abschluss des Einrichtungsassistenten sicher im Entwurf gestartet
 - GitHub-Qualitätsprüfung auf `actions/checkout@v7` und damit die aktuelle Aktionslaufzeit umgestellt
 
 ### Ergänzt
+
+- anbieterneutralen Arbeitsbereich für persönliche Einladungen und Erinnerungen ergänzt
+- Rückmeldestatus mit eigenem Filter für Personen ohne Rückmeldung ergänzt
+- anpassbare Betreffzeilen und Nachrichtentexte mit Platzhaltern für Veranstaltung, Organisation, Zeitraum, Direktlink und Code ergänzt
+- einzelne Übergabe an das vorhandene E-Mail-Programm sowie kopierfertige Texte ergänzt
+- persönliche QR-Codes und druckbare Einladungskarten ohne externen QR-Dienst ergänzt
+- automatisierte Funktions-, HTTP- und Browserprüfungen für Filter, Vorlagen, Direktlinks, QR-Codes und Datenschutzgrenzen ergänzt
 
 - geschützte Diensteinteilung mit PDF-Upload, Austausch, Vorschau, Veröffentlichung und Löschung im Adminbereich ergänzt
 - Zugriff per persönlichem Code oder E-Mail nur nach bereits gespeicherter Zu- oder Absage ergänzt

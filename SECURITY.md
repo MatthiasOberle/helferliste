@@ -30,6 +30,8 @@ Keine realen personenbezogenen Daten, Zugangscodes, Passwörter oder vollständi
 - Schreibrechte auf `data/` und `assets/uploads/` beschränken
 - Ausführung von Skripten im Upload-Ordner verhindern
 - CSV-Kontaktimporte vor dem Bestätigen in der Vorschau kontrollieren und nur notwendige E-Mail-Adressen importieren
+- persönliche Direktlinks, Zugangscodes und QR-Codes nur einzeln an die vorgesehene Person geben und nicht öffentlich teilen
+- Einladungen und Erinnerungen vor dem Öffnen des eigenen E-Mail-Programms nochmals auf Empfänger und Inhalt prüfen
 - gedruckte Schicht- und Anwesenheitslisten nur berechtigten Personen geben und nach dem Einsatz sicher vernichten
 - regelmäßige, getestete Backups anlegen
 - nur berechtigten Personen Adminzugriff geben
