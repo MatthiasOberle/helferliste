@@ -5,6 +5,25 @@ project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 test_root="$(mktemp -d)"
 test_port="$((18000 + $$ % 1000))"
 test_password='Sehr-Sicheres-Testpasswort-2026!'
+server_pid=''
+
+report_failure() {
+  local exit_code=$?
+  echo "FEHLER: HTTP-Prüfung in Zeile ${BASH_LINENO[0]} fehlgeschlagen." >&2
+  if [[ -f "${test_root}/server.log" ]]; then
+    tail -80 "${test_root}/server.log" >&2 || true
+  fi
+  exit "${exit_code}"
+}
+
+cleanup() {
+  if [[ -n "${server_pid}" ]]; then
+    kill "${server_pid}" 2>/dev/null || true
+  fi
+}
+
+trap report_failure ERR
+trap cleanup EXIT
 
 mkdir -p "${test_root}/data" "${test_root}/www/assets/uploads"
 cp -R "${project_root}/www/." "${test_root}/www/"
@@ -15,7 +34,6 @@ setup_token="$(printf '%s\n' "${migration_output}" | grep -Eo '([A-F0-9]{4}-){7}
 
 php -S "127.0.0.1:${test_port}" -t "${test_root}/www" > "${test_root}/server.log" 2>&1 &
 server_pid=$!
-trap 'kill "${server_pid}" 2>/dev/null || true' EXIT
 
 setup_status="000"
 for attempt in 1 2 3 4 5; do
