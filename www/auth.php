@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/version.php';
 
+// Adminseiten und der Login enthalten bzw. schützen personenbezogene Daten.
+// Weder Browser-Zwischenspeicher noch Referrer sollen diese Informationen weitertragen.
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Referrer-Policy: no-referrer');
+
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_set_cookie_params([
         'lifetime' => 0,

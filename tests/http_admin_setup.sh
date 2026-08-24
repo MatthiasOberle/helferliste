@@ -166,8 +166,13 @@ additional_shift_id="$(sqlite3 "${database_file}" "SELECT id FROM shifts WHERE a
 [[ -n "${entry_id}" ]]
 [[ -n "${additional_shift_id}" ]]
 
-unauthorized_invitations_status="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:${test_port}/invitations.php")"
-[[ "${unauthorized_invitations_status}" == "302" ]]
+unauthorized_invitations_status="$(curl -q -sS --cookie '' -D "${test_root}/invitations-login-headers.txt" -o "${test_root}/invitations-login.html" -w '%{http_code}' "http://127.0.0.1:${test_port}/invitations.php")"
+[[ "${unauthorized_invitations_status}" == "200" ]]
+grep -qi '^Cache-Control: no-store' "${test_root}/invitations-login-headers.txt"
+grep -qi '^Referrer-Policy: no-referrer' "${test_root}/invitations-login-headers.txt"
+grep -q 'Admin Login' "${test_root}/invitations-login.html"
+! grep -q 'csv-eins@example.org' "${test_root}/invitations-login.html"
+! grep -q '7171' "${test_root}/invitations-login.html"
 
 invitations_status="$(curl -sS -D "${test_root}/invitations-headers.txt" -b "${test_root}/cookies.txt" -c "${test_root}/cookies.txt" -o "${test_root}/invitations.html" -w '%{http_code}' "http://127.0.0.1:${test_port}/invitations.php?filter=pending")"
 [[ "${invitations_status}" == "200" ]]
