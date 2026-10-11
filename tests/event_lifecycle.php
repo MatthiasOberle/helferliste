@@ -94,13 +94,19 @@ try {
     eventTestAssert(null, $db->query('SELECT personal_data_json FROM event_archives')->fetchColumn(), 'Personendaten wurden nicht aus dem Archiv entfernt.');
 
     archiveAndStartNextEvent($db, $databaseFile, $backupDirectory, [
-        'next_event_name' => 'Neustart ohne Vorlage',
+        'next_event_name' => '',
         'keep_shifts' => false,
         'keep_texts' => false,
         'keep_design' => false,
         'retain_personal_data' => false,
     ]);
     eventTestAssert(0, (int)$db->query('SELECT COUNT(*) FROM shifts')->fetchColumn(), 'Abgewählte Schichtvorlage wurde dennoch übernommen.');
+    eventTestAssert('', eventSetting($db, 'event_name'), 'Beim reinen Abschluss wurde unerwartet eine nächste Veranstaltung angelegt.');
+    eventTestAssert('', eventSetting($db, 'event_start_date'), 'Beim reinen Abschluss blieb ein Veranstaltungsbeginn gesetzt.');
+    eventTestAssert('', eventSetting($db, 'event_end_date'), 'Beim reinen Abschluss blieb ein Veranstaltungsende gesetzt.');
+    eventTestAssert('draft', eventSetting($db, 'event_status'), 'Die abgeschlossene Helferliste wurde nicht sicher in den Entwurf versetzt.');
+    eventTestAssert('0', eventSetting($db, 'setup_wizard_completed'), 'Die abgeschlossene Helferliste gilt fälschlich als eingerichtet.');
+    eventTestAssert('event_closed', (string)$db->query('SELECT action FROM event_log ORDER BY id DESC LIMIT 1')->fetchColumn(), 'Reiner Veranstaltungsabschluss wurde nicht protokolliert.');
     eventTestAssert(appDefaults()['text_login_heading'], appSetting($db, 'text_login_heading'), 'Seitentexte wurden nicht auf Standard zurückgesetzt.');
     eventTestAssert(appDefaults()['invitation_subject'], appSetting($db, 'invitation_subject'), 'Einladungsvorlage wurde nicht auf Standard zurückgesetzt.');
     eventTestAssert(appDefaults()['primary_color'], appSetting($db, 'primary_color'), 'Design wurde nicht auf Standard zurückgesetzt.');

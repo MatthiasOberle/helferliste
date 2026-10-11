@@ -79,6 +79,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'retain_personal_data' => isset($_POST['retain_personal_data']),
             ]);
             $message = 'Veranstaltung wurde als Archiv #' . $result['archive_id'] . ' abgeschlossen. Vorher wurde automatisch eine Datenbanksicherung angelegt.';
+            if ($result['started_next_event']) {
+                $message .= ' Die nächste Veranstaltung wurde als Entwurf angelegt.';
+            } else {
+                $message .= ' Eine neue Veranstaltung kann später eingerichtet werden.';
+            }
             $appConfig = appConfig($db);
             $currentEventName = trim((string)$appConfig['event_name']);
         }
@@ -179,8 +184,9 @@ foreach ($archives as $archive) {
     <?php if ($message !== ''): ?><div class="notice success"><?= h($message) ?></div><?php endif; ?>
     <?php if ($error !== ''): ?><div class="notice error"><?= h($error) ?></div><?php endif; ?>
 
+    <?php if ($currentEventName !== ''): ?>
     <section class="card">
-        <h2>Abschließen und nächste Veranstaltung starten</h2>
+        <h2>Veranstaltung abschließen</h2>
         <p>Vor jeder Änderung wird automatisch eine vollständige Datenbanksicherung erstellt. Im Archiv bleiben mindestens die anonymen Summen und die Schichtauslastung erhalten. Zugangscodes werden niemals archiviert.</p>
         <div class="grid" style="margin:14px 0;">
             <div class="stat"><strong><?= (int)$currentSummary['codes'] ?></strong>aktive Zugangscodes</div>
@@ -189,18 +195,20 @@ foreach ($archives as $archive) {
             <div class="stat"><strong><?= (int)$currentSummary['open_change_requests'] ?></strong>offene Änderungswünsche</div>
         </div>
         <div class="warning"><strong>Wichtig:</strong> Nach dem Abschluss sind die bisherigen Codes und Rückmeldungen nicht mehr in der aktiven Helferliste vorhanden.</div>
-        <form method="post" onsubmit="return confirm('Veranstaltung wirklich abschließen und die nächste starten?');">
+        <form method="post" onsubmit="return confirm('Veranstaltung wirklich abschließen?');">
             <?= csrfField() ?>
             <input type="hidden" name="action" value="archive_event">
+            <h3 style="margin-top:20px;">Nächste Veranstaltung (optional)</h3>
+            <p class="muted">Leer lassen, wenn du nur abschließen und noch keine neue Veranstaltung anlegen möchtest.</p>
             <label for="next_event_name">Name der nächsten Veranstaltung</label>
-            <input id="next_event_name" name="next_event_name" type="text" maxlength="160" required placeholder="Zum Beispiel: Sommerfest 2027">
+            <input id="next_event_name" name="next_event_name" type="text" maxlength="160" placeholder="Zum Beispiel: Sommerfest 2027">
             <div class="grid">
                 <div><label for="next_event_start_date">Beginn optional</label><input id="next_event_start_date" name="next_event_start_date" type="date"></div>
                 <div><label for="next_event_end_date">Ende optional</label><input id="next_event_end_date" name="next_event_end_date" type="date"></div>
             </div>
-            <p class="muted">Die neue Veranstaltung startet immer als Entwurf und muss nach der Kontrolle ausdrücklich veröffentlicht werden.</p>
+            <p class="muted">Wenn du einen Namen einträgst, startet die neue Veranstaltung als Entwurf und muss nach der Kontrolle ausdrücklich veröffentlicht werden.</p>
 
-            <h3 style="margin-top:20px;">Als Vorlage übernehmen</h3>
+            <h3 style="margin-top:20px;">Für die nächste Verwendung behalten</h3>
             <label class="option"><input type="checkbox" name="keep_shifts" checked> <span>Schichten und Kapazitäten behalten</span></label>
             <label class="option"><input type="checkbox" name="keep_texts" checked> <span>Seitentexte behalten</span></label>
             <label class="option"><input type="checkbox" name="keep_design" checked> <span>Design und Kopfbild behalten</span></label>
@@ -213,6 +221,13 @@ foreach ($archives as $archive) {
             <button class="danger" type="submit" style="margin-top:14px;">Veranstaltung abschließen</button>
         </form>
     </section>
+    <?php else: ?>
+    <section class="card">
+        <h2>Keine aktive Veranstaltung</h2>
+        <p>Die vorherige Veranstaltung ist abgeschlossen. Du kannst jetzt eine neue Veranstaltung einrichten oder weiter unten eine abgeschlossene Veranstaltung als Vorlage verwenden.</p>
+        <a class="btn" href="setup_wizard.php">Neue Veranstaltung einrichten</a>
+    </section>
+    <?php endif; ?>
 
     <section class="card">
         <h2>Abgeschlossene Veranstaltungen</h2>
