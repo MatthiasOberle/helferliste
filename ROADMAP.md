@@ -107,7 +107,9 @@ Abgeschlossen:
 - geschützte PDF-Diensteinteilung mit kontrollierter Freigabe nach abgegebener Rückmeldung umgesetzt
 - anbieterneutrale Einladungen und Erinnerungen mit persönlichen Direktlinks, lokalen QR-Codes, anpassbaren Texten und Rückmeldestatus umgesetzt
 - automatischen Versand und Öffnungstracking bewusst nicht aktiviert
+- erste stabile universelle Produktfassung `1.8.0` mit Versions-Tag, GitHub-Release und geprüftem Installationspaket veröffentlicht
 
 Als Nächstes:
 
-1. Erfahrungen aus den nächsten Praxiseinsätzen sammeln und die optionalen Erweiterungen danach priorisieren.
+1. Eine vollständig getrennte Testinstallation vorbereiten, ohne die Feuerwehr-Installation zu verändern.
+2. Erfahrungen aus den nächsten Praxiseinsätzen sammeln und die optionalen Erweiterungen danach priorisieren.

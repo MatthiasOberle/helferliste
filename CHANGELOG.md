@@ -4,6 +4,10 @@ Alle wichtigen Änderungen dieses Projekts werden hier dokumentiert.
 
 ## Unveröffentlicht
 
+Derzeit sind keine weiteren Änderungen vorgemerkt.
+
+## 1.8.0 – 2026-10-11
+
 ### Korrigiert
 
 - manuelle Schichtzuordnungen im Adminbereich unter PHP 8.3 ohne Transaktionsfehler speicherbar gemacht
@@ -17,10 +21,11 @@ Alle wichtigen Änderungen dieses Projekts werden hier dokumentiert.
 - Linux- und Windows-Installer auf den gemeinsamen Migrationsmechanismus umgestellt
 - allgemein bekanntes Standardpasswort durch einmaligen, zufälligen Einrichtungscode ersetzt
 - Mindestlänge für neue Admin-Passwörter auf 12 Zeichen angehoben
-- Entwicklungsstand auf `1.8.0-dev` bei unverändertem Datenbankschema 5 angehoben
+- stabile Anwendungsversion `1.8.0` bei unverändertem Datenbankschema 5 veröffentlicht
 - Beispielschichten von der Veröffentlichungsbereitschaft ausgeschlossen
 - neue Installationen bis zum Abschluss des Einrichtungsassistenten sicher im Entwurf gestartet
 - GitHub-Qualitätsprüfung auf `actions/checkout@v7` und damit die aktuelle Aktionslaufzeit umgestellt
+- GitHub-Qualitätsprüfung für reproduzierbare Releases ausdrücklich auf Ubuntu 24.04 festgelegt
 
 ### Ergänzt
 
