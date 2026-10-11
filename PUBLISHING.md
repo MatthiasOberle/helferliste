@@ -1,68 +1,73 @@
-# Repository auf GitHub veröffentlichen
+# Stabile Version veröffentlichen
 
-Der Ordner ist bereits als lokales Git-Repository mit dem Hauptzweig `main` vorbereitet. Die Dateien sind geprüft; für den ersten Commit muss Git nur noch den Namen und die E-Mail-Adresse des veröffentlichenden GitHub-Kontos kennen.
+Diese Anleitung beschreibt den kontrollierten Release-Weg für das bestehende GitHub-Repository. Eine GitHub-Veröffentlichung aktualisiert keine installierte Helferliste und insbesondere nicht die getrennte Feuerwehr-Installation.
 
-## 1. Git-Absender einmalig einrichten
+## 1. Ausgangsstand sichern
 
-Falls noch nicht geschehen, die eigenen Angaben einsetzen:
+- Arbeitsverzeichnis und Zweig prüfen.
+- Ein vollständiges Git-Bundle des bisherigen Stands außerhalb des Repositorys erstellen und verifizieren.
+- Anwendungsversion und Datenbankschema getrennt betrachten: Eine neue Programmversion benötigt nicht automatisch eine neue Schemaversion.
 
-```bash
-git config --global user.name "DEIN NAME"
-git config --global user.email "DEINE GITHUB-EMAIL"
-```
+## 2. Release vorbereiten
 
-Wer die private E-Mail-Adresse nicht in Commits zeigen möchte, kann die von GitHub bereitgestellte `noreply`-Adresse aus den GitHub-Einstellungen verwenden.
+- `www/version.php` auf die stabile Version ohne `-dev` setzen.
+- `CHANGELOG.md`, `README.md` und `ROADMAP.md` auf denselben Stand bringen.
+- Keine Datenbank, Uploads, Zugangsdaten oder anderen Produktivdaten in das Paket aufnehmen.
+- Drittanbieterhinweise und Lizenzdateien beibehalten.
 
-## 2. Ersten Commit erstellen
+## 3. Vollständig prüfen
 
-Im Ordner dieser Veröffentlichung:
-
-```bash
-git add .
-git commit -m "Helferliste 1.0.0"
-```
-
-## 3. Neues Repository anlegen
-
-Auf GitHub ein neues, leeres Repository erstellen, zum Beispiel mit dem Namen `helferliste`.
-
-Beim Anlegen **keine** zusätzliche README, `.gitignore` oder Lizenz erzeugen, weil diese Dateien bereits enthalten sind.
-
-## 4. GitHub-Adresse verbinden
-
-Im Ordner dieser Veröffentlichung:
+Mindestens ausführen:
 
 ```bash
-git remote add origin https://github.com/DEIN-BENUTZERNAME/helferliste.git
+find www -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+bash -n Install/install_helferliste.sh
+php tests/smoke.php
+php tests/migration.php
+php tests/restore.php
+php tests/event_lifecycle.php
+php tests/scheduling.php
+php tests/setup_wizard.php
+php tests/contact_import.php
+php tests/print_lists.php
+php tests/invitations.php
+bash tests/http_admin_setup.sh
+git diff --check
 ```
 
-Alternativ mit SSH:
+Die GitHub-Prüfung muss anschließend unter PHP 8.3, 8.4 und 8.5 erfolgreich sein.
+
+## 4. Über den geschützten Hauptzweig veröffentlichen
+
+- Release-Änderungen menschlich und konkret formulieren.
+- Entwicklungszweig zu GitHub pushen.
+- Pull Request gegen `main` öffnen.
+- Pflichtprüfungen abwarten und erst danach zusammenführen.
+- Den veröffentlichten `main` wieder in den Entwicklungszweig übernehmen.
+
+Direkte Pushes, Force-Pushes und Löschungen von `main` bleiben gesperrt.
+
+## 5. Tag, Paket und Prüfsumme erstellen
+
+Der Tag muss exakt auf dem geprüften Release-Commit in `main` liegen:
 
 ```bash
-git remote add origin git@github.com:DEIN-BENUTZERNAME/helferliste.git
+git tag -a v1.8.0 <RELEASE-COMMIT> -m "Helferliste 1.8.0"
+git push origin v1.8.0
+git archive --format=zip --prefix=helferliste-1.8.0/ -o helferliste-1.8.0.zip v1.8.0
+shasum -a 256 helferliste-1.8.0.zip > helferliste-1.8.0.zip.sha256
 ```
 
-## 5. Veröffentlichen
+Das ZIP aus dem Tag erneut entpacken und mindestens Version, erwartete Dateien, fehlende Produktivdaten, PHP-Syntax, Neuinstallation und Migration prüfen.
 
-```bash
-git push -u origin main
-```
+## 6. GitHub-Release anlegen
 
-Bei HTTPS kann GitHub statt des Kontopassworts eine Browseranmeldung oder ein Personal Access Token verlangen.
+Das Release enthält:
 
-## 6. Empfohlene GitHub-Einstellungen
+- eine natürliche Zusammenfassung der wichtigsten Neuerungen;
+- klare Installations- und Aktualisierungshinweise;
+- das geprüfte ZIP-Paket;
+- die zugehörige SHA-256-Datei;
+- den Hinweis, dass vorhandene Daten und Uploads vor einer Aktualisierung gesichert werden müssen.
 
-- unter `About` eine kurze Beschreibung und passende Themen ergänzen
-- unter `Security` das private Melden von Schwachstellen aktivieren
-- GitHub Actions für die Qualitätsprüfung zulassen
-- den Hauptzweig `main` optional schützen
-- für stabile Stände Releases und Versions-Tags verwenden
-
-Erster Versions-Tag:
-
-```bash
-git tag -a v1.0.0 -m "Helferliste 1.0.0"
-git push origin v1.0.0
-```
-
-Vor jedem Release die Checkliste in [INSTALL.md](INSTALL.md), [CONFIGURATION.md](CONFIGURATION.md) und [SECURITY.md](SECURITY.md) nochmals prüfen.
+Nach der Veröffentlichung Release-Seite, Anlagen, Prüfsumme, Tag-Ziel und abschließende GitHub-Prüfungen erneut kontrollieren.

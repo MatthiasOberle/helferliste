@@ -8,11 +8,11 @@ Entwickelt und gepflegt von **[MOWST — Digitale Werkstatt](https://mowst.de)**
 
 Helfer benötigen kein Benutzerkonto und keine App. Ein persönlicher vierstelliger Code oder Direktlink genügt. Die Anwendung benötigt weder Framework noch Composer oder Node.js: PHP 8.x und SQLite reichen aus.
 
-## Woran ich gerade arbeite
+## Aktueller Produktstand
 
-Die Helferliste ist kein abgeschlossenes Archivprojekt. Ich entwickle sie Schritt für Schritt zu einem Werkzeug weiter, das sich auch außerhalb der Feuerwehr einfach einsetzen lässt.
+Die stabile Version 1.8.0 bündelt den bisherigen Ausbau zu einem Werkzeug, das sich auch außerhalb der Feuerwehr einfach einsetzen lässt.
 
-Im aktuellen Produktstand sind bereits eine geführte Ersteinrichtung, sichere Datenbankaktualisierungen, Veranstaltungsarchive, flexible Schichten, ein geprüfter CSV-Kontaktimport sowie anbieterneutrale Einladungs- und Erinnerungswerkzeuge hinzugekommen. Neue Funktionen werden zuerst im Entwicklungszweig praktisch getestet und laufen automatisch unter PHP 8.3, 8.4 und 8.5 durch. Fertige Arbeitspakete werden anschließend über einen Pull Request in den geschützten Hauptzweig übernommen.
+Enthalten sind eine geführte Ersteinrichtung, sichere Datenbankaktualisierungen, Veranstaltungsarchive, flexible Schichten, ein geprüfter CSV-Kontaktimport, Drucklisten, eine geschützte Diensteinteilung sowie anbieterneutrale Einladungs- und Erinnerungswerkzeuge. Neue Funktionen werden zuerst im Entwicklungszweig praktisch getestet und laufen automatisch unter PHP 8.3, 8.4 und 8.5 durch. Fertige Arbeitspakete werden anschließend über einen Pull Request in den geschützten Hauptzweig übernommen.
 
 ## Einblicke
 
@@ -118,6 +118,8 @@ Mitgeliefert werden neutrale Motive für Feuerwehr, THW und Notarzt. Eigene PNG-
 ## Installation
 
 Die vollständigen Anleitungen für Ubuntu/Debian, manuelle Linux-Installationen, Windows/IIS und XAMPP stehen in [INSTALL.md](INSTALL.md).
+
+Für eine neue Installation steht die jeweils stabile Fassung mit Prüfsumme unter [GitHub Releases](https://github.com/MatthiasOberle/helferliste/releases) bereit. Der Quellcode enthält keine Produktivdaten oder persönlichen Betreiberangaben.
 
 Kurzfassung für einen frischen Ubuntu-/Debian-Server:
 
