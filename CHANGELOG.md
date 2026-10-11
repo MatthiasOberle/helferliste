@@ -25,6 +25,7 @@ Derzeit sind keine weiteren Änderungen vorgemerkt.
 - Beispielschichten von der Veröffentlichungsbereitschaft ausgeschlossen
 - neue Installationen bis zum Abschluss des Einrichtungsassistenten sicher im Entwurf gestartet
 - GitHub-Qualitätsprüfung auf `actions/checkout@v7` und damit die aktuelle Aktionslaufzeit umgestellt
+- GitHub-Qualitätsprüfung für reproduzierbare Releases ausdrücklich auf Ubuntu 24.04 festgelegt
 
 ### Ergänzt
 
