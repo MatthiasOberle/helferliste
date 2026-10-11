@@ -6,6 +6,12 @@ Alle wichtigen Änderungen dieses Projekts werden hier dokumentiert.
 
 Derzeit sind keine weiteren Änderungen vorgemerkt.
 
+## 1.8.1 – 2026-10-11
+
+### Korrigiert
+
+- eine Veranstaltung kann jetzt abgeschlossen und zurückgesetzt werden, ohne sofort den Namen einer nächsten Veranstaltung eingeben zu müssen
+
 ## 1.8.0 – 2026-10-11
 
 ### Korrigiert

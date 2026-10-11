@@ -156,8 +156,12 @@ function resetEventSettings(PDO $db, bool $keepTexts, bool $keepDesign): void
 }
 
 /**
+ * Ein leerer Name fuer die naechste Veranstaltung schliesst nur die aktuelle
+ * Veranstaltung ab. Die Anwendung bleibt danach als nicht eingerichteter
+ * Entwurf stehen und kann spaeter neu eingerichtet werden.
+ *
  * @param array{next_event_name:string,next_event_start_date?:string,next_event_end_date?:string,keep_shifts:bool,keep_texts:bool,keep_design:bool,retain_personal_data:bool} $options
- * @return array{archive_id:int,backup_file:string}
+ * @return array{archive_id:int,backup_file:string,started_next_event:bool}
  */
 function archiveAndStartNextEvent(PDO $db, string $databaseFile, string $backupDirectory, array $options): array
 {
@@ -167,11 +171,14 @@ function archiveAndStartNextEvent(PDO $db, string $databaseFile, string $backupD
     $nextEventName = trim($options['next_event_name']);
     $nextStartDate = normalizeOptionalDate((string)($options['next_event_start_date'] ?? ''));
     $nextEndDate = normalizeOptionalDate((string)($options['next_event_end_date'] ?? ''));
-    if ($eventName === '' || $nextEventName === '') {
-        throw new InvalidArgumentException('Aktuelle und nächste Veranstaltung benötigen einen Namen.');
+    if ($eventName === '') {
+        throw new InvalidArgumentException('Die aktuelle Veranstaltung benötigt einen Namen.');
     }
     if (strlen($nextEventName) > 160) {
         throw new InvalidArgumentException('Der Name der nächsten Veranstaltung ist zu lang.');
+    }
+    if ($nextEventName === '' && ($nextStartDate !== '' || $nextEndDate !== '')) {
+        throw new InvalidArgumentException('Datumsangaben sind nur zusammen mit einer nächsten Veranstaltung möglich.');
     }
     if ($nextEndDate !== '' && $nextStartDate === '') {
         throw new InvalidArgumentException('Für das Enddatum der nächsten Veranstaltung muss ein Startdatum angegeben werden.');
@@ -222,8 +229,12 @@ function archiveAndStartNextEvent(PDO $db, string $databaseFile, string $backupD
         saveAppSetting($db, 'event_end_date', $nextEndDate);
         saveAppSetting($db, 'event_status', 'draft');
         saveAppSetting($db, 'setup_wizard_completed', '0');
-        $logStmt = $db->prepare("INSERT INTO event_log (created_at, action, detail) VALUES (datetime('now'), 'event_started', ?)");
-        $logStmt->execute(['Neue Veranstaltung gestartet: ' . $nextEventName . '. Archiv #' . $archiveId . '.']);
+        $logStmt = $db->prepare('INSERT INTO event_log (created_at, action, detail) VALUES (datetime(\'now\'), ?, ?)');
+        if ($nextEventName === '') {
+            $logStmt->execute(['event_closed', 'Veranstaltung abgeschlossen. Archiv #' . $archiveId . '.']);
+        } else {
+            $logStmt->execute(['event_started', 'Neue Veranstaltung gestartet: ' . $nextEventName . '. Archiv #' . $archiveId . '.']);
+        }
         helferlisteCommitTransaction($db);
     } catch (Throwable $error) {
         helferlisteRollbackTransaction($db);
@@ -231,7 +242,11 @@ function archiveAndStartNextEvent(PDO $db, string $databaseFile, string $backupD
     }
 
     helferlisteAssertDatabaseIntegrity($db);
-    return ['archive_id' => $archiveId, 'backup_file' => $backupFile];
+    return [
+        'archive_id' => $archiveId,
+        'backup_file' => $backupFile,
+        'started_next_event' => $nextEventName !== '',
+    ];
 }
 
 function deleteArchivedPersonalData(PDO $db, int $archiveId): bool

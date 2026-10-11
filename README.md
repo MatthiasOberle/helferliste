@@ -10,7 +10,7 @@ Helfer benötigen kein Benutzerkonto und keine App. Ein persönlicher vierstelli
 
 ## Aktueller Produktstand
 
-Die stabile Version 1.8.0 bündelt den bisherigen Ausbau zu einem Werkzeug, das sich auch außerhalb der Feuerwehr einfach einsetzen lässt.
+Die stabile Version 1.8.1 bündelt den bisherigen Ausbau zu einem Werkzeug, das sich auch außerhalb der Feuerwehr einfach einsetzen lässt.
 
 Enthalten sind eine geführte Ersteinrichtung, sichere Datenbankaktualisierungen, Veranstaltungsarchive, flexible Schichten, ein geprüfter CSV-Kontaktimport, Drucklisten, eine geschützte Diensteinteilung sowie anbieterneutrale Einladungs- und Erinnerungswerkzeuge. Neue Funktionen werden zuerst im Entwicklungszweig praktisch getestet und laufen automatisch unter PHP 8.3, 8.4 und 8.5 durch. Fertige Arbeitspakete werden anschließend über einen Pull Request in den geschützten Hauptzweig übernommen.
 

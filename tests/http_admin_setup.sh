@@ -417,25 +417,23 @@ archive_post_status="$(curl -sS -b "${test_root}/cookies.txt" -c "${test_root}/c
   --data-urlencode "csrf_token=${archive_csrf}" \
   --data-urlencode 'action=archive_event' \
   --data-urlencode 'confirmation=HTTP Testfest 2026' \
-  --data-urlencode 'next_event_name=HTTP Testfest 2027' \
-  --data-urlencode 'next_event_start_date=2027-07-09' \
-  --data-urlencode 'next_event_end_date=2027-07-11' \
-  --data-urlencode 'keep_shifts=1' \
-  --data-urlencode 'keep_texts=1' \
-  --data-urlencode 'keep_design=1' \
-  --data-urlencode 'retain_personal_data=1' \
   "http://127.0.0.1:${test_port}/event_archive.php")"
 [[ "${archive_post_status}" == "200" ]]
 grep -q 'Veranstaltung wurde als Archiv' "${test_root}/archive-post.html"
+grep -q 'Eine neue Veranstaltung kann später eingerichtet werden' "${test_root}/archive-post.html"
+grep -q 'Keine aktive Veranstaltung' "${test_root}/archive-post.html"
+! grep -q 'name="action" value="archive_event"' "${test_root}/archive-post.html"
 [[ "$(sqlite3 "${database_file}" 'SELECT COUNT(*) FROM event_archives;')" == "1" ]]
 [[ "$(sqlite3 "${database_file}" 'SELECT COUNT(*) FROM entries;')" == "0" ]]
-[[ "$(sqlite3 "${database_file}" "SELECT setting_value FROM app_settings WHERE setting_key='event_name';")" == "HTTP Testfest 2027" ]]
+[[ "$(sqlite3 "${database_file}" 'SELECT COUNT(*) FROM access_codes;')" == "0" ]]
+[[ "$(sqlite3 "${database_file}" 'SELECT COUNT(*) FROM shifts;')" == "0" ]]
+[[ "$(sqlite3 "${database_file}" "SELECT setting_value FROM app_settings WHERE setting_key='event_name';")" == "" ]]
 [[ "$(sqlite3 "${database_file}" "SELECT setting_value FROM app_settings WHERE setting_key='event_status';")" == "draft" ]]
 find "${test_root}/data/backups" -type f -name 'helferliste-vor-abschluss-*.sqlite' -print -quit | grep -q .
 
 public_status="$(curl -sS -o "${test_root}/public.html" -w '%{http_code}' "http://127.0.0.1:${test_port}/")"
 [[ "${public_status}" == "200" ]]
-grep -q 'HTTP Testfest 2027' "${test_root}/public.html"
+! grep -q 'HTTP Testfest 2026' "${test_root}/public.html"
 grep -q 'noch nicht freigegeben' "${test_root}/public.html"
 if grep -q 'name="action" value="login"' "${test_root}/public.html"; then
   echo 'FEHLER: Entwurf zeigt weiterhin das öffentliche Anmeldeformular.' >&2
